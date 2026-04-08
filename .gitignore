@@ -3,6 +3,6 @@ __pycache__/
 .env
 *.db
 instance/
-migrations/
+migrations/versions/__pycache__/
 .venv/
 venv/
