@@ -37,6 +37,9 @@ class ProductionConfig(Config):
             app.config['SQLALCHEMY_DATABASE_URI'] = uri.replace(
                 'postgres://', 'postgresql://', 1
             )
+        # Fail loudly if SECRET_KEY is weak in production
+        if app.config.get('SECRET_KEY') in (None, '', 'dev-secret-change-me'):
+            raise RuntimeError('SECRET_KEY must be set to a strong random value in production')
 
 
 config = {

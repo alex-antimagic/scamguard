@@ -74,5 +74,7 @@ def check_google_search(address: str, address_type: AddressType,
             severity=severity,
             detail=f'Found {total} scam/fraud report{"s" if total != 1 else ""} online for this address',
         )]
-    except Exception:
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning('Google CSE check failed: %s', e)
         return []

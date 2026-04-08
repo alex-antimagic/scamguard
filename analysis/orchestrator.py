@@ -10,6 +10,7 @@ from analysis.analyzers.phone import analyze_phone
 from analysis.analyzers.instagram import analyze_instagram
 from analysis.analyzers.whatsapp import analyze_whatsapp
 from analysis.analyzers.common import check_internal_reports, check_google_search
+from analysis.validators import is_safe_url
 from extensions import db
 
 
@@ -38,6 +39,20 @@ def run_scan(raw_address: str) -> AnalysisResult:
     metadata = {}
 
     if address_type == AddressType.URL:
+        # SSRF protection: block internal/private URLs
+        if not is_safe_url(normalized):
+            from analysis.models import Finding, Severity
+            result.findings = [Finding(
+                analyzer='url', check='blocked_internal',
+                severity=Severity.HIGH,
+                detail='URL points to a private/internal network — analysis blocked',
+            )]
+            result.risk_score = 25
+            result.verdict = 'suspicious'
+            result.metadata = {'note': 'Internal URL blocked for security'}
+            result.analysis_time_ms = int((time.time() - start) * 1000)
+            return result
+
         f, m = analyze_url(normalized)
         findings.extend(f)
         metadata.update(m)

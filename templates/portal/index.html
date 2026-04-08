@@ -370,10 +370,13 @@
               >
                 <option value="">Select a category...</option>
                 <option value="phishing">Phishing</option>
+                <option value="spam">Spam</option>
                 <option value="smishing">Smishing (SMS scam)</option>
                 <option value="vishing">Vishing (voice call scam)</option>
+                <option value="financial_scam">Financial scam</option>
                 <option value="investment_fraud">Investment / Crypto fraud</option>
                 <option value="romance_scam">Romance scam</option>
+                <option value="fake_account">Fake account</option>
                 <option value="tech_support">Fake tech support</option>
                 <option value="impersonation">Impersonation</option>
                 <option value="malware">Malware / Ransomware</option>
@@ -420,7 +423,7 @@
       </div>
       <div class="flex items-center gap-1.5">
         <svg class="w-3.5 h-3.5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2zm10-10V7a4 4 0 0 0-8 0v4h8z"/></svg>
-        No data stored
+        Scans stored anonymously
       </div>
     </div>
 
@@ -568,12 +571,12 @@
   // Render results
   // ============================================================
   function renderResults(data) {
-    const risk = riskConfig[data.risk_level] || riskConfig.suspicious;
+    const risk = riskConfig[data.verdict] || riskConfig.suspicious;
 
     // --- Header card ---
     animateGauge(data.risk_score, risk.color);
 
-    $('typeBadge').textContent = data.address_type || 'Unknown';
+    $('typeBadge').textContent = (data.address && data.address.type) || 'Unknown';
     $('typeBadge').className = 'badge bg-surface-700 text-gray-300';
 
     $('riskBadge').textContent = risk.label;

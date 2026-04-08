@@ -229,7 +229,8 @@ def check_safe_browsing(url: str, api_key: str) -> list[Finding]:
 
     try:
         resp = requests.post(
-            f'https://safebrowsing.googleapis.com/v4/threatMatches:find?key={api_key}',
+            'https://safebrowsing.googleapis.com/v4/threatMatches:find',
+            headers={'X-Goog-Api-Key': api_key},
             json={
                 'client': {'clientId': 'scamguard', 'clientVersion': '1.0'},
                 'threatInfo': {
@@ -254,8 +255,9 @@ def check_safe_browsing(url: str, api_key: str) -> list[Finding]:
                 severity=Severity.CRITICAL,
                 detail=f'Flagged by Google Safe Browsing: {", ".join(threats)}',
             )]
-    except Exception:
-        pass
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning('Safe Browsing check failed: %s', e)
 
     return []
 
@@ -283,8 +285,9 @@ def check_whois_age(domain: str) -> list[Finding]:
                     severity=Severity.MEDIUM,
                     detail=f'Domain registered {age_days} days ago',
                 )]
-    except Exception:
-        pass
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning('WHOIS check failed for %s: %s', domain, e)
     return []
 
 
