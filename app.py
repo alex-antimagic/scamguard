@@ -22,10 +22,15 @@ def create_app(config_name=None):
     # Trust proxy headers (Heroku uses 1 proxy)
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
-    # Sentry
+    # Sentry — init early so all errors are captured including extension init
     sentry_dsn = os.environ.get('SENTRY_DSN')
     if sentry_dsn:
-        sentry_sdk.init(dsn=sentry_dsn, integrations=[FlaskIntegration()])
+        sentry_sdk.init(
+            dsn=sentry_dsn,
+            integrations=[FlaskIntegration()],
+            traces_sample_rate=0.1,
+            environment=config_name,
+        )
 
     # Extensions
     db.init_app(app)
@@ -52,6 +57,16 @@ def create_app(config_name=None):
                 "frame-ancestors 'none';"
             )
         return response
+
+    # Error handlers — ensure all 500s reach Sentry
+    @app.errorhandler(500)
+    def internal_error(e):
+        sentry_sdk.capture_exception(e.original_exception if hasattr(e, 'original_exception') else e)
+        return {'error': 'Internal server error'}, 500
+
+    @app.errorhandler(429)
+    def rate_limited(e):
+        return {'error': 'Rate limit exceeded. Please slow down.'}, 429
 
     # Import models so Alembic sees them
     from models import scan, report  # noqa: F401
