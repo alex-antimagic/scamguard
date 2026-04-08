@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ScamGuard — Scam & Fraud Lookup Tool</title>
+  <meta name="description" content="ScamGuard lets you instantly check any URL, phone number, or social handle for scams, fraud, and malicious activity. Free, fast, and authoritative." />
+  <meta name="keywords" content="scam checker, fraud lookup, phone number scam, URL safety check, phishing detector, scam database" />
+  <meta property="og:title" content="ScamGuard — Scam & Fraud Lookup" />
+  <meta property="og:description" content="Check any URL, phone number, or social handle for scams instantly." />
+  <meta property="og:type" content="website" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="/" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50:  '#f0f9ff',
+              100: '#e0f2fe',
+              400: '#38bdf8',
+              500: '#0ea5e9',
+              600: '#0284c7',
+              700: '#0369a1',
+              900: '#0c4a6e',
+            },
+            surface: {
+              900: '#0d1117',
+              800: '#161b22',
+              700: '#21262d',
+              600: '#30363d',
+              500: '#3d444d',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
+          },
+          animation: {
+            'spin-slow': 'spin 1.2s linear infinite',
+            'fade-in': 'fadeIn 0.3s ease-out',
+            'slide-up': 'slideUp 0.35s ease-out',
+            'pulse-ring': 'pulseRing 1.5s ease-out infinite',
+          },
+          keyframes: {
+            fadeIn: {
+              '0%': { opacity: '0' },
+              '100%': { opacity: '1' },
+            },
+            slideUp: {
+              '0%': { opacity: '0', transform: 'translateY(16px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
+            },
+            pulseRing: {
+              '0%': { transform: 'scale(0.95)', boxShadow: '0 0 0 0 rgba(14,165,233,0.5)' },
+              '70%': { transform: 'scale(1)', boxShadow: '0 0 0 10px rgba(14,165,233,0)' },
+              '100%': { transform: 'scale(0.95)', boxShadow: '0 0 0 0 rgba(14,165,233,0)' },
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+    body {
+      background-color: #0d1117;
+      color: #e6edf3;
+    }
+
+    /* Subtle grid background */
+    .bg-grid {
+      background-image:
+        linear-gradient(rgba(48,54,61,0.4) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(48,54,61,0.4) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+    /* Glow behind the search box */
+    .hero-glow {
+      background: radial-gradient(ellipse 80% 50% at 50% 60%, rgba(14,165,233,0.08) 0%, transparent 70%);
+    }
+
+    /* Search box focus glow */
+    .search-input:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(14,165,233,0.5), 0 0 24px rgba(14,165,233,0.12);
+    }
+
+    /* Risk gauge arc */
+    .gauge-ring {
+      stroke-dasharray: 188.5;
+      stroke-dashoffset: 188.5;
+      transition: stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.5s ease;
+      stroke-linecap: round;
+    }
+
+    /* Spinner */
+    .spinner {
+      border: 3px solid rgba(14,165,233,0.2);
+      border-top-color: #0ea5e9;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Severity badge base */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 999px;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #0d1117; }
+    ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #3d444d; }
+
+    /* Report form slide */
+    .report-form {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+      opacity: 0;
+    }
+    .report-form.open {
+      max-height: 400px;
+      opacity: 1;
+    }
+
+    /* Finding card hover */
+    .finding-card {
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+    .finding-card:hover {
+      background: rgba(48,54,61,0.6);
+      border-color: rgba(14,165,233,0.25);
+    }
+  </style>
+</head>
+<body class="min-h-screen font-sans antialiased">
+
+  <!-- Background layers -->
+  <div class="fixed inset-0 bg-grid pointer-events-none"></div>
+  <div class="fixed inset-0 hero-glow pointer-events-none"></div>
+
+  <!-- Header -->
+  <header class="relative z-10 flex items-center justify-between px-6 py-4 border-b border-surface-700/60">
+    <div class="flex items-center gap-2">
+      <svg class="w-6 h-6 text-brand-400" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.25C17.25 22.15 21 17.25 21 12V7L12 2z" fill="currentColor" fill-opacity="0.15" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+        <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="font-semibold text-white tracking-tight">ScamGuard</span>
+    </div>
+    <nav class="hidden sm:flex items-center gap-6 text-sm text-gray-400">
+      <a href="#" class="hover:text-white transition-colors">How It Works</a>
+      <a href="#" class="hover:text-white transition-colors">Report a Scam</a>
+      <a href="#" class="hover:text-white transition-colors">API</a>
+    </nav>
+  </header>
+
+  <!-- Main -->
+  <main class="relative z-10 flex flex-col items-center px-4 pt-16 pb-24 sm:pt-24">
+
+    <!-- Hero -->
+    <div class="flex flex-col items-center text-center mb-10 animate-fade-in">
+      <div class="flex items-center gap-3 mb-5">
+        <div class="relative">
+          <div class="w-14 h-14 rounded-2xl bg-brand-500/10 border border-brand-500/20 flex items-center justify-center shadow-lg">
+            <svg class="w-8 h-8 text-brand-400" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.25C17.25 22.15 21 17.25 21 12V7L12 2z" fill="currentColor" fill-opacity="0.15" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+              <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        </div>
+        <h1 class="text-4xl sm:text-5xl font-bold text-white tracking-tight">ScamGuard</h1>
+      </div>
+      <p class="text-gray-400 text-base sm:text-lg max-w-md leading-relaxed">
+        Check any URL, phone number, or social handle for scams
+      </p>
+    </div>
+
+    <!-- Search Box -->
+    <div class="w-full max-w-2xl animate-fade-in" style="animation-delay:0.1s">
+      <div class="relative group">
+        <!-- Search icon -->
+        <div class="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
+          <svg class="w-5 h-5 text-gray-500 group-focus-within:text-brand-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="M21 21l-4.35-4.35"/>
+          </svg>
+        </div>
+
+        <input
+          id="searchInput"
+          type="text"
+          autocomplete="off"
+          spellcheck="false"
+          placeholder="Paste a URL, phone number, @handle..."
+          class="search-input w-full bg-surface-800 border border-surface-600 rounded-2xl pl-12 pr-4 py-4 text-white placeholder-gray-500 text-base transition-all duration-200 hover:border-surface-500"
+        />
+
+        <!-- Clear button -->
+        <button
+          id="clearBtn"
+          class="hidden absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+          onclick="clearSearch()"
+          aria-label="Clear search"
+        >
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Scan button -->
+      <div class="flex justify-center mt-4">
+        <button
+          id="scanBtn"
+          onclick="runScan()"
+          class="flex items-center gap-2.5 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white font-semibold px-8 py-3 rounded-xl transition-all duration-150 shadow-lg hover:shadow-brand-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/>
+          </svg>
+          Scan
+        </button>
+      </div>
+
+      <!-- Example queries -->
+      <div class="flex flex-wrap justify-center gap-2 mt-5">
+        <span class="text-xs text-gray-600 self-center">Try:</span>
+        <button onclick="setExample('http://paypa1-support-login.com')" class="text-xs text-gray-500 hover:text-brand-400 bg-surface-800 hover:bg-surface-700 border border-surface-600 rounded-lg px-3 py-1 transition-all">paypa1-support-login.com</button>
+        <button onclick="setExample('+1-800-555-0199')" class="text-xs text-gray-500 hover:text-brand-400 bg-surface-800 hover:bg-surface-700 border border-surface-600 rounded-lg px-3 py-1 transition-all">+1-800-555-0199</button>
+        <button onclick="setExample('@crypto_giveaway_official')" class="text-xs text-gray-500 hover:text-brand-400 bg-surface-800 hover:bg-surface-700 border border-surface-600 rounded-lg px-3 py-1 transition-all">@crypto_giveaway_official</button>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loadingState" class="hidden w-full max-w-2xl mt-12 flex flex-col items-center gap-4 animate-fade-in">
+      <div class="spinner"></div>
+      <p id="loadingText" class="text-gray-400 text-sm font-medium">Initializing scan...</p>
+      <div class="w-full bg-surface-800 rounded-full h-1 overflow-hidden">
+        <div id="loadingBar" class="h-full bg-brand-500 rounded-full transition-all duration-500" style="width:0%"></div>
+      </div>
+    </div>
+
+    <!-- Error State -->
+    <div id="errorState" class="hidden w-full max-w-2xl mt-10 animate-slide-up">
+      <div class="bg-red-950/40 border border-red-800/50 rounded-2xl p-5 flex items-start gap-4">
+        <div class="shrink-0 w-9 h-9 rounded-full bg-red-500/10 flex items-center justify-center">
+          <svg class="w-5 h-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <path stroke-linecap="round" d="M12 8v4m0 4h.01"/>
+          </svg>
+        </div>
+        <div>
+          <p class="font-semibold text-red-300 text-sm">Scan Failed</p>
+          <p id="errorMessage" class="text-red-400/80 text-sm mt-1">An unexpected error occurred. Please try again.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results Panel -->
+    <div id="resultsPanel" class="hidden w-full max-w-2xl mt-10 space-y-4 animate-slide-up">
+
+      <!-- Risk Header Card -->
+      <div class="bg-surface-800 border border-surface-600 rounded-2xl p-6">
+        <div class="flex flex-col sm:flex-row items-center gap-6">
+
+          <!-- Gauge -->
+          <div class="relative shrink-0 w-28 h-28">
+            <svg class="w-full h-full -rotate-90" viewBox="0 0 80 80">
+              <!-- Track -->
+              <circle cx="40" cy="40" r="30" fill="none" stroke="#21262d" stroke-width="8"/>
+              <!-- Arc -->
+              <circle
+                id="gaugeArc"
+                cx="40" cy="40" r="30"
+                fill="none"
+                stroke="#0ea5e9"
+                stroke-width="8"
+                class="gauge-ring"
+              />
+            </svg>
+            <div class="absolute inset-0 flex flex-col items-center justify-center">
+              <span id="gaugeScore" class="text-2xl font-bold text-white">—</span>
+              <span class="text-xs text-gray-500 font-medium">/100</span>
+            </div>
+          </div>
+
+          <!-- Verdict -->
+          <div class="flex-1 text-center sm:text-left">
+            <div class="flex flex-wrap justify-center sm:justify-start items-center gap-2 mb-2">
+              <span id="typeBadge" class="badge bg-gray-700 text-gray-300">—</span>
+              <span id="riskBadge" class="badge bg-gray-700 text-gray-300">—</span>
+            </div>
+            <h2 id="verdictText" class="text-2xl sm:text-3xl font-bold text-white mb-1">—</h2>
+            <p id="verdictAddress" class="text-sm text-gray-400 font-mono truncate max-w-xs sm:max-w-full"></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Findings -->
+      <div id="findingsSection" class="hidden bg-surface-800 border border-surface-600 rounded-2xl overflow-hidden">
+        <div class="px-5 py-4 border-b border-surface-700 flex items-center gap-2">
+          <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 0 2-2h2a2 2 0 0 0 2 2"/>
+          </svg>
+          <h3 class="font-semibold text-sm text-gray-200">Findings</h3>
+          <span id="findingsCount" class="ml-auto badge bg-surface-700 text-gray-400">0</span>
+        </div>
+        <ul id="findingsList" class="divide-y divide-surface-700"></ul>
+      </div>
+
+      <!-- Metadata -->
+      <div id="metaSection" class="hidden bg-surface-800 border border-surface-600 rounded-2xl overflow-hidden">
+        <div class="px-5 py-4 border-b border-surface-700 flex items-center gap-2">
+          <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/>
+          </svg>
+          <h3 class="font-semibold text-sm text-gray-200">Intelligence Data</h3>
+        </div>
+        <dl id="metaGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-0 divide-y divide-surface-700">
+          <!-- Populated by JS -->
+        </dl>
+      </div>
+
+      <!-- Report Section -->
+      <div class="bg-surface-800 border border-surface-600 rounded-2xl overflow-hidden">
+        <div class="px-5 py-4 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21"/>
+            </svg>
+            <h3 class="font-semibold text-sm text-gray-200">Community Report</h3>
+          </div>
+          <button
+            id="reportToggleBtn"
+            onclick="toggleReportForm()"
+            class="text-xs font-semibold text-brand-400 hover:text-brand-300 border border-brand-500/30 hover:border-brand-400/50 rounded-lg px-3 py-1.5 transition-all"
+          >
+            Report this address
+          </button>
+        </div>
+
+        <!-- Expandable form -->
+        <div id="reportForm" class="report-form">
+          <div class="px-5 pb-5 pt-1 space-y-3">
+            <div>
+              <label class="block text-xs font-medium text-gray-400 mb-1.5">Category</label>
+              <select
+                id="reportCategory"
+                class="w-full bg-surface-700 border border-surface-600 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500 transition-colors"
+              >
+                <option value="">Select a category...</option>
+                <option value="phishing">Phishing</option>
+                <option value="smishing">Smishing (SMS scam)</option>
+                <option value="vishing">Vishing (voice call scam)</option>
+                <option value="investment_fraud">Investment / Crypto fraud</option>
+                <option value="romance_scam">Romance scam</option>
+                <option value="tech_support">Fake tech support</option>
+                <option value="impersonation">Impersonation</option>
+                <option value="malware">Malware / Ransomware</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-400 mb-1.5">Description <span class="text-gray-600">(optional)</span></label>
+              <textarea
+                id="reportDescription"
+                rows="3"
+                placeholder="Describe what happened, any additional context..."
+                class="w-full bg-surface-700 border border-surface-600 rounded-xl px-3 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-brand-500 transition-colors resize-none"
+              ></textarea>
+            </div>
+            <div class="flex items-center justify-between pt-1">
+              <p id="reportStatus" class="text-xs text-gray-500"></p>
+              <button
+                onclick="submitReport()"
+                class="flex items-center gap-2 bg-surface-700 hover:bg-surface-600 border border-surface-500 hover:border-brand-500/50 text-white text-sm font-semibold px-5 py-2 rounded-xl transition-all active:scale-95"
+              >
+                Submit Report
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /resultsPanel -->
+
+    <!-- Trust indicators (shown before first scan) -->
+    <div id="trustIndicators" class="flex flex-wrap justify-center gap-6 mt-16 text-xs text-gray-600 animate-fade-in" style="animation-delay:0.2s">
+      <div class="flex items-center gap-1.5">
+        <svg class="w-3.5 h-3.5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.25C17.25 22.15 21 17.25 21 12V7L12 2z"/></svg>
+        Real-time threat intelligence
+      </div>
+      <div class="flex items-center gap-1.5">
+        <svg class="w-3.5 h-3.5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" d="M12 6v6l4 2"/></svg>
+        Results in under 5 seconds
+      </div>
+      <div class="flex items-center gap-1.5">
+        <svg class="w-3.5 h-3.5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 0 0-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 0 1 5.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 0 1 9.288 0"/></svg>
+        Community-powered database
+      </div>
+      <div class="flex items-center gap-1.5">
+        <svg class="w-3.5 h-3.5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2zm10-10V7a4 4 0 0 0-8 0v4h8z"/></svg>
+        No data stored
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="relative z-10 border-t border-surface-700/50 py-8 px-6 mt-auto">
+    <div class="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-600">
+      <div class="flex items-center gap-2">
+        <svg class="w-4 h-4 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.25C17.25 22.15 21 17.25 21 12V7L12 2z" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>ScamGuard &copy; 2026</span>
+      </div>
+      <div class="flex gap-5">
+        <a href="#" class="hover:text-gray-400 transition-colors">Privacy</a>
+        <a href="#" class="hover:text-gray-400 transition-colors">Terms</a>
+        <a href="#" class="hover:text-gray-400 transition-colors">API Docs</a>
+      </div>
+    </div>
+  </footer>
+
+<script>
+  // ============================================================
+  // State
+  // ============================================================
+  let currentAddress = '';
+  let reportFormOpen = false;
+
+  // ============================================================
+  // Helpers
+  // ============================================================
+  const $ = id => document.getElementById(id);
+
+  function setExample(val) {
+    $('searchInput').value = val;
+    $('clearBtn').classList.remove('hidden');
+    $('searchInput').focus();
+  }
+
+  function clearSearch() {
+    $('searchInput').value = '';
+    $('clearBtn').classList.add('hidden');
+    $('searchInput').focus();
+    hideResults();
+  }
+
+  function hideResults() {
+    $('resultsPanel').classList.add('hidden');
+    $('errorState').classList.add('hidden');
+    $('loadingState').classList.add('hidden');
+    $('trustIndicators').classList.remove('hidden');
+  }
+
+  $('searchInput').addEventListener('input', function () {
+    $('clearBtn').classList.toggle('hidden', this.value.length === 0);
+  });
+
+  $('searchInput').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') runScan();
+  });
+
+  // ============================================================
+  // Loading progress simulation
+  // ============================================================
+  const loadingSteps = [
+    { pct: 15, msg: 'Resolving address type...' },
+    { pct: 32, msg: 'Querying threat databases...' },
+    { pct: 55, msg: 'Running heuristic analyzers...' },
+    { pct: 75, msg: 'Checking community reports...' },
+    { pct: 90, msg: 'Compiling results...' },
+  ];
+
+  let loadingTimer = null;
+
+  function startLoadingProgress() {
+    let step = 0;
+    $('loadingBar').style.width = '0%';
+    $('loadingText').textContent = 'Initializing scan...';
+    loadingTimer = setInterval(() => {
+      if (step < loadingSteps.length) {
+        $('loadingBar').style.width = loadingSteps[step].pct + '%';
+        $('loadingText').textContent = loadingSteps[step].msg;
+        step++;
+      }
+    }, 420);
+  }
+
+  function stopLoadingProgress() {
+    clearInterval(loadingTimer);
+    $('loadingBar').style.width = '100%';
+  }
+
+  // ============================================================
+  // Risk config
+  // ============================================================
+  const riskConfig = {
+    safe: {
+      label: 'Safe',
+      color: '#22c55e',       // green-500
+      bgClass: 'bg-green-900/40 text-green-300',
+      verdictClass: 'text-green-400',
+      badgeClass: 'bg-green-900/60 text-green-300',
+    },
+    suspicious: {
+      label: 'Suspicious',
+      color: '#eab308',       // yellow-500
+      bgClass: 'bg-yellow-900/40 text-yellow-300',
+      verdictClass: 'text-yellow-400',
+      badgeClass: 'bg-yellow-900/60 text-yellow-300',
+    },
+    dangerous: {
+      label: 'Dangerous',
+      color: '#f97316',       // orange-500
+      bgClass: 'bg-orange-900/40 text-orange-300',
+      verdictClass: 'text-orange-400',
+      badgeClass: 'bg-orange-900/60 text-orange-300',
+    },
+    malicious: {
+      label: 'Malicious',
+      color: '#ef4444',       // red-500
+      bgClass: 'bg-red-900/40 text-red-300',
+      verdictClass: 'text-red-400',
+      badgeClass: 'bg-red-900/60 text-red-300',
+    },
+  };
+
+  const severityConfig = {
+    info:     { label: 'Info',     cls: 'bg-blue-900/50 text-blue-300',   dot: '#60a5fa' },
+    low:      { label: 'Low',      cls: 'bg-gray-800 text-gray-400',      dot: '#9ca3af' },
+    medium:   { label: 'Medium',   cls: 'bg-yellow-900/50 text-yellow-300', dot: '#fbbf24' },
+    high:     { label: 'High',     cls: 'bg-orange-900/50 text-orange-300', dot: '#fb923c' },
+    critical: { label: 'Critical', cls: 'bg-red-900/50 text-red-300',     dot: '#f87171' },
+  };
+
+  // ============================================================
+  // Gauge
+  // ============================================================
+  function animateGauge(score, color) {
+    const arc = $('gaugeArc');
+    const circumference = 2 * Math.PI * 30; // ~188.5
+    const offset = circumference * (1 - score / 100);
+    arc.style.stroke = color;
+    arc.style.strokeDashoffset = offset;
+    $('gaugeScore').textContent = score;
+  }
+
+  // ============================================================
+  // Render results
+  // ============================================================
+  function renderResults(data) {
+    const risk = riskConfig[data.risk_level] || riskConfig.suspicious;
+
+    // --- Header card ---
+    animateGauge(data.risk_score, risk.color);
+
+    $('typeBadge').textContent = data.address_type || 'Unknown';
+    $('typeBadge').className = 'badge bg-surface-700 text-gray-300';
+
+    $('riskBadge').textContent = risk.label;
+    $('riskBadge').className = 'badge ' + risk.badgeClass;
+
+    $('verdictText').textContent = data.verdict || risk.label;
+    $('verdictText').className = 'text-2xl sm:text-3xl font-bold mb-1 ' + risk.verdictClass;
+
+    $('verdictAddress').textContent = currentAddress;
+
+    // --- Findings ---
+    const findings = data.findings || [];
+    if (findings.length > 0) {
+      $('findingsSection').classList.remove('hidden');
+      $('findingsCount').textContent = findings.length;
+      $('findingsList').innerHTML = findings.map(f => {
+        const sev = severityConfig[f.severity] || severityConfig.info;
+        return `
+          <li class="finding-card flex items-start gap-4 px-5 py-4 border border-transparent">
+            <span class="mt-0.5 shrink-0 w-2 h-2 rounded-full" style="background:${sev.dot};margin-top:6px"></span>
+            <div class="flex-1 min-w-0">
+              <div class="flex flex-wrap items-center gap-2 mb-1">
+                <span class="text-xs font-mono text-gray-500">${escHtml(f.analyzer || 'Analyzer')}</span>
+                <span class="badge ${sev.cls}">${sev.label}</span>
+              </div>
+              <p class="text-sm text-gray-300 leading-relaxed">${escHtml(f.detail || '')}</p>
+            </div>
+          </li>
+        `;
+      }).join('');
+    } else {
+      $('findingsSection').classList.add('hidden');
+    }
+
+    // --- Metadata ---
+    const meta = data.metadata || {};
+    const metaEntries = Object.entries(meta);
+    if (metaEntries.length > 0) {
+      $('metaSection').classList.remove('hidden');
+      $('metaGrid').innerHTML = metaEntries.map(([key, val]) => `
+        <div class="px-5 py-3 col-span-1">
+          <dt class="text-xs text-gray-600 font-medium uppercase tracking-wide mb-0.5">${escHtml(formatKey(key))}</dt>
+          <dd class="text-sm text-gray-300 font-mono truncate" title="${escHtml(String(val))}">${escHtml(String(val))}</dd>
+        </div>
+      `).join('');
+    } else {
+      $('metaSection').classList.add('hidden');
+    }
+
+    // Show panel
+    $('resultsPanel').classList.remove('hidden');
+    $('resultsPanel').classList.add('animate-slide-up');
+    $('trustIndicators').classList.add('hidden');
+
+    // Scroll to results
+    setTimeout(() => {
+      $('resultsPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 150);
+  }
+
+  function formatKey(key) {
+    return key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  }
+
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  // ============================================================
+  // Scan
+  // ============================================================
+  async function runScan() {
+    const address = $('searchInput').value.trim();
+    if (!address) {
+      $('searchInput').focus();
+      $('searchInput').classList.add('border-red-500');
+      setTimeout(() => $('searchInput').classList.remove('border-red-500'), 1500);
+      return;
+    }
+
+    currentAddress = address;
+
+    // Reset UI
+    $('resultsPanel').classList.add('hidden');
+    $('errorState').classList.add('hidden');
+    $('reportForm').classList.remove('open');
+    reportFormOpen = false;
+    $('reportToggleBtn').textContent = 'Report this address';
+    $('reportStatus').textContent = '';
+
+    // Show loading
+    $('loadingState').classList.remove('hidden');
+    $('trustIndicators').classList.add('hidden');
+    $('scanBtn').disabled = true;
+
+    startLoadingProgress();
+
+    try {
+      const res = await fetch('/api/v1/scan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ address }),
+      });
+
+      stopLoadingProgress();
+
+      if (!res.ok) {
+        let errMsg = `Server returned ${res.status}`;
+        try {
+          const errBody = await res.json();
+          errMsg = errBody.error || errBody.message || errMsg;
+        } catch (_) {}
+        throw new Error(errMsg);
+      }
+
+      const data = await res.json();
+
+      $('loadingState').classList.add('hidden');
+      renderResults(data);
+
+    } catch (err) {
+      stopLoadingProgress();
+      $('loadingState').classList.add('hidden');
+      $('errorState').classList.remove('hidden');
+      $('errorMessage').textContent = err.message || 'An unexpected error occurred. Please try again.';
+      $('trustIndicators').classList.remove('hidden');
+    } finally {
+      $('scanBtn').disabled = false;
+    }
+  }
+
+  // ============================================================
+  // Report
+  // ============================================================
+  function toggleReportForm() {
+    reportFormOpen = !reportFormOpen;
+    const form = $('reportForm');
+    const btn = $('reportToggleBtn');
+    if (reportFormOpen) {
+      form.classList.add('open');
+      btn.textContent = 'Cancel';
+    } else {
+      form.classList.remove('open');
+      btn.textContent = 'Report this address';
+    }
+  }
+
+  async function submitReport() {
+    const category = $('reportCategory').value;
+    if (!category) {
+      $('reportStatus').textContent = 'Please select a category.';
+      $('reportStatus').className = 'text-xs text-red-400';
+      return;
+    }
+
+    const description = $('reportDescription').value.trim();
+    $('reportStatus').textContent = 'Submitting...';
+    $('reportStatus').className = 'text-xs text-gray-400';
+
+    try {
+      const res = await fetch('/api/v1/report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          address: currentAddress,
+          category,
+          description,
+        }),
+      });
+
+      if (!res.ok) {
+        let errMsg = `Error ${res.status}`;
+        try {
+          const errBody = await res.json();
+          errMsg = errBody.error || errBody.message || errMsg;
+        } catch (_) {}
+        throw new Error(errMsg);
+      }
+
+      $('reportStatus').textContent = 'Thank you — report submitted.';
+      $('reportStatus').className = 'text-xs text-green-400';
+      $('reportCategory').value = '';
+      $('reportDescription').value = '';
+
+      setTimeout(() => {
+        $('reportForm').classList.remove('open');
+        $('reportToggleBtn').textContent = 'Report this address';
+        reportFormOpen = false;
+        $('reportStatus').textContent = '';
+      }, 2500);
+
+    } catch (err) {
+      $('reportStatus').textContent = err.message || 'Submission failed. Try again.';
+      $('reportStatus').className = 'text-xs text-red-400';
+    }
+  }
+</script>
+</body>
+</html>
