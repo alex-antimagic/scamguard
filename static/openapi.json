@@ -1,0 +1,394 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "ScamGuard API",
+    "description": "Universal scam and fraud lookup API. Check any URL, phone number, Instagram handle, or WhatsApp number for scam indicators. Combines heuristic analysis, community reports, and external threat intelligence to produce a risk score and verdict.\n\n## Authentication\nNo authentication required for MVP. Rate limits are enforced per IP address.\n\n## Rate Limits\n| Endpoint | Limit |\n|----------|-------|\n| `POST /api/v1/scan` | 30/minute, 500/day |\n| `GET /api/v1/scan/{token}` | 60/minute |\n| `POST /api/v1/report` | 10/hour |\n\n## Address Types\nThe API auto-detects the input type:\n- **URL** — `https://example.com`, `example.com`\n- **Phone** — `+1 (555) 123-4567`, `5551234567`\n- **Instagram** — `@handle`, `instagram.com/handle`\n- **WhatsApp** — `wa.me/1234567890`\n\n## Verdicts\n| Score | Verdict |\n|-------|---------|\n| 0–20 | `safe` |\n| 21–50 | `suspicious` |\n| 51–80 | `dangerous` |\n| 81–100 | `malicious` |",
+    "version": "1.0.0",
+    "contact": {
+      "name": "ScamGuard",
+      "url": "https://scamguard-6727ac7c29b7.herokuapp.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "/api/v1",
+      "description": "Current server"
+    }
+  ],
+  "paths": {
+    "/scan": {
+      "post": {
+        "operationId": "scanAddress",
+        "summary": "Scan an address for scam indicators",
+        "description": "Submit a URL, phone number, Instagram handle, or WhatsApp number for analysis. The system auto-detects the address type, runs type-specific analyzers (heuristics, blocklists, WHOIS, DNS), checks the internal reports database, and returns a risk score with detailed findings.",
+        "tags": ["Scan"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScanRequest"
+              },
+              "examples": {
+                "url": {
+                  "summary": "Scan a URL",
+                  "value": {"address": "http://paypa1-secure-login.tk/verify"}
+                },
+                "phone": {
+                  "summary": "Scan a phone number",
+                  "value": {"address": "+1 (800) 555-0199"}
+                },
+                "instagram": {
+                  "summary": "Scan an Instagram handle",
+                  "value": {"address": "@crypto_millionaire_tips"}
+                },
+                "whatsapp": {
+                  "summary": "Scan a WhatsApp number",
+                  "value": {"address": "wa.me/2348012345678"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Scan completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScanResponse"
+                },
+                "example": {
+                  "scan_token": "9b81ba5b-a365-46ee-a88d-be5e89013144",
+                  "address": {
+                    "raw": "http://paypa1-secure-login.tk/verify",
+                    "normalized": "http://paypa1-secure-login.tk/verify",
+                    "type": "url"
+                  },
+                  "risk_score": 60,
+                  "verdict": "dangerous",
+                  "findings": [
+                    {
+                      "analyzer": "url",
+                      "check": "suspicious_tld",
+                      "severity": "medium",
+                      "detail": "Uses suspicious TLD: .tk"
+                    },
+                    {
+                      "analyzer": "reports",
+                      "check": "user_reports",
+                      "severity": "high",
+                      "detail": "Reported 52 times by users as suspicious"
+                    }
+                  ],
+                  "metadata": {
+                    "domain": "paypa1-secure-login.tk",
+                    "tld": "tk",
+                    "subdomain": ""
+                  },
+                  "analysis_time_ms": 245,
+                  "checked_at": "2026-04-08T15:56:18.182952+00:00"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "missing_field": {
+                    "summary": "Missing address",
+                    "value": {"error": "Missing required field: address"}
+                  },
+                  "too_long": {
+                    "summary": "Address too long",
+                    "value": {"error": "Address too long (max 500 chars)"}
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {"error": "Rate limit exceeded"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/scan/{token}": {
+      "get": {
+        "operationId": "getScan",
+        "summary": "Retrieve a previous scan result",
+        "description": "Look up a completed scan by its token. Returns the full scan result including risk score, verdict, findings, and metadata.",
+        "tags": ["Scan"],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "description": "The scan token returned from a POST /scan request",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "9b81ba5b-a365-46ee-a88d-be5e89013144"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Scan result found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScanResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Scan not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {"error": "Scan not found"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/report": {
+      "post": {
+        "operationId": "reportAddress",
+        "summary": "Report an address as suspicious",
+        "description": "Submit a community report flagging an address as suspicious or scam. Reports feed into the internal database and influence future scan results for the same address. Duplicate reports from the same browser are fingerprinted.",
+        "tags": ["Report"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportRequest"
+              },
+              "examples": {
+                "spam_call": {
+                  "summary": "Report a spam phone number",
+                  "value": {
+                    "address": "+1 (800) 555-0199",
+                    "category": "spam",
+                    "description": "Robocall about extended car warranty. Calls 3x daily."
+                  }
+                },
+                "phishing_url": {
+                  "summary": "Report a phishing URL",
+                  "value": {
+                    "address": "http://paypa1-secure-login.tk/verify",
+                    "category": "phishing",
+                    "description": "Fake PayPal login page"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Report submitted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportResponse"
+                },
+                "example": {
+                  "report_token": "a643f1ce-5704-4b59-a7ac-a15c8638bec8",
+                  "status": "received"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ScanRequest": {
+        "type": "object",
+        "required": ["address"],
+        "properties": {
+          "address": {
+            "type": "string",
+            "maxLength": 500,
+            "description": "The URL, phone number, Instagram handle, or WhatsApp number to scan. The system auto-detects the type.",
+            "example": "http://paypa1-secure-login.tk/verify"
+          }
+        }
+      },
+      "ScanResponse": {
+        "type": "object",
+        "properties": {
+          "scan_token": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier for this scan result"
+          },
+          "address": {
+            "type": "object",
+            "properties": {
+              "raw": {
+                "type": "string",
+                "description": "The original input as submitted"
+              },
+              "normalized": {
+                "type": "string",
+                "description": "Normalized form used for analysis (e.g., E.164 for phone numbers)"
+              },
+              "type": {
+                "type": "string",
+                "enum": ["url", "phone", "instagram", "whatsapp", "unknown"],
+                "description": "Auto-detected address type"
+              }
+            }
+          },
+          "risk_score": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Aggregate risk score (0 = safe, 100 = definitely malicious)"
+          },
+          "verdict": {
+            "type": "string",
+            "enum": ["safe", "suspicious", "dangerous", "malicious", "unknown"],
+            "description": "Human-readable risk verdict"
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Finding"
+            },
+            "description": "Individual checks that contributed to the score"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Type-specific metadata (e.g., domain, carrier, country, line_type)"
+          },
+          "analysis_time_ms": {
+            "type": "integer",
+            "description": "Time taken to complete analysis in milliseconds"
+          },
+          "checked_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of when the scan was performed"
+          }
+        }
+      },
+      "Finding": {
+        "type": "object",
+        "properties": {
+          "analyzer": {
+            "type": "string",
+            "description": "Which analyzer produced this finding",
+            "enum": ["url", "phone", "instagram", "whatsapp", "blocklist", "reports", "search", "whois", "dns"]
+          },
+          "check": {
+            "type": "string",
+            "description": "Specific check that triggered (e.g., suspicious_tld, voip_number, user_reports)"
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["critical", "high", "medium", "low", "info"],
+            "description": "Severity level of this finding"
+          },
+          "detail": {
+            "type": "string",
+            "description": "Human-readable explanation of the finding"
+          }
+        }
+      },
+      "ReportRequest": {
+        "type": "object",
+        "required": ["address"],
+        "properties": {
+          "address": {
+            "type": "string",
+            "maxLength": 500,
+            "description": "The address to report"
+          },
+          "category": {
+            "type": "string",
+            "enum": ["phishing", "spam", "fake_account", "romance_scam", "financial_scam", "malware", "other"],
+            "default": "other",
+            "description": "Category of the scam/abuse"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000,
+            "description": "Optional description of why this address is suspicious"
+          }
+        }
+      },
+      "ReportResponse": {
+        "type": "object",
+        "properties": {
+          "report_token": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier for this report"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["received"],
+            "description": "Report submission status"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Error message"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Scan",
+      "description": "Scan addresses for scam indicators"
+    },
+    {
+      "name": "Report",
+      "description": "Submit community reports about suspicious addresses"
+    }
+  ]
+}
