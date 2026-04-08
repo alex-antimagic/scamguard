@@ -14,8 +14,20 @@ class Config:
     SCAN_CACHE_TTL = int(os.environ.get('SCAN_CACHE_TTL', 3600))
     ANALYSIS_TIMEOUT = int(os.environ.get('ANALYSIS_TIMEOUT', 10))
 
-    # Rate limiting
+    # Rate limiting — Heroku Redis uses self-signed certs, need ssl_cert_reqs=None
     RATELIMIT_STORAGE_URI = os.environ.get('REDIS_URL', 'memory://')
+    RATELIMIT_STORAGE_OPTIONS = {}
+
+    @classmethod
+    def _configure_redis_ssl(cls):
+        redis_url = os.environ.get('REDIS_URL', '')
+        if redis_url.startswith('rediss://'):
+            import ssl
+            cls.RATELIMIT_STORAGE_OPTIONS = {
+                'connection_pool_options': {
+                    'ssl_cert_reqs': ssl.CERT_NONE,
+                }
+            }
 
 
 class DevelopmentConfig(Config):
@@ -28,6 +40,7 @@ class DevelopmentConfig(Config):
 class ProductionConfig(Config):
     DEBUG = False
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', '')
+    Config._configure_redis_ssl()
 
     @staticmethod
     def init_app(app):
