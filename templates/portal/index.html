@@ -555,6 +555,18 @@
     critical: { label: 'Critical', cls: 'bg-red-900/50 text-red-300',     dot: '#f87171' },
   };
 
+  const analyzerLabels = {
+    url: 'URL Heuristics',
+    phone: 'Phone Analysis',
+    instagram: 'Instagram',
+    whatsapp: 'WhatsApp',
+    blocklist: 'Google Web Risk',
+    reports: 'Community Reports',
+    search: 'Web Search',
+    whois: 'Domain Age',
+    dns: 'DNS',
+  };
+
   // ============================================================
   // Gauge
   // ============================================================
@@ -599,7 +611,7 @@
             <span class="mt-0.5 shrink-0 w-2 h-2 rounded-full" style="background:${sev.dot};margin-top:6px"></span>
             <div class="flex-1 min-w-0">
               <div class="flex flex-wrap items-center gap-2 mb-1">
-                <span class="text-xs font-mono text-gray-500">${escHtml(f.analyzer || 'Analyzer')}</span>
+                <span class="text-xs font-medium text-gray-400">${escHtml(analyzerLabels[f.analyzer] || f.analyzer || 'Analyzer')}</span>
                 <span class="badge ${sev.cls}">${sev.label}</span>
               </div>
               <p class="text-sm text-gray-300 leading-relaxed">${escHtml(f.detail || '')}</p>
