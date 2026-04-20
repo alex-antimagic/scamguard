@@ -1,0 +1,82 @@
+{% extends "app/_layout.html" %}
+{% block title %}Overview — ScamGuard{% endblock %}
+{% block content %}
+<div class="max-w-6xl mx-auto">
+  <header class="mb-8">
+    <h1 class="text-2xl font-bold text-white">Welcome back{% if current_user.name %}, {{ current_user.name }}{% endif %}</h1>
+    <p class="text-sm text-gray-400 mt-1">Here's your ScamGuard usage at a glance.</p>
+  </header>
+
+  <!-- Stat cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <div class="bg-surface-900 border border-white/5 rounded-xl p-5">
+      <div class="text-xs uppercase tracking-wide text-gray-500 mb-1">Plan</div>
+      <div class="text-xl font-semibold text-white">{{ plan.display_name }}</div>
+      <a href="{{ url_for('app.billing') }}" class="text-xs text-brand-400 hover:text-brand-300 mt-2 inline-block">Manage plan →</a>
+    </div>
+
+    <div class="bg-surface-900 border border-white/5 rounded-xl p-5">
+      <div class="text-xs uppercase tracking-wide text-gray-500 mb-1">Scans this period</div>
+      <div class="text-xl font-semibold text-white">{{ '{:,}'.format(scans_this_period) }}<span class="text-sm text-gray-500"> / {{ '{:,}'.format(quota) if quota else '∞' }}</span></div>
+      {% if quota %}
+      {% set pct = (scans_this_period / quota * 100) if quota > 0 else 0 %}
+      <div class="w-full h-1.5 bg-surface-700 rounded-full mt-3 overflow-hidden">
+        <div class="h-full bg-brand-500" style="width: {{ pct if pct < 100 else 100 }}%"></div>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="bg-surface-900 border border-white/5 rounded-xl p-5">
+      <div class="text-xs uppercase tracking-wide text-gray-500 mb-1">From API</div>
+      <div class="text-xl font-semibold text-white">{{ '{:,}'.format(source_counts.get('api', 0)) }}</div>
+    </div>
+
+    <div class="bg-surface-900 border border-white/5 rounded-xl p-5">
+      <div class="text-xs uppercase tracking-wide text-gray-500 mb-1">From portal</div>
+      <div class="text-xl font-semibold text-white">{{ '{:,}'.format(source_counts.get('portal', 0)) }}</div>
+    </div>
+  </div>
+
+  <!-- Verdict breakdown + Recent -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="bg-surface-900 border border-white/5 rounded-xl p-6">
+      <h2 class="text-sm font-semibold text-gray-300 mb-4">Verdict distribution</h2>
+      {% if verdict_counts %}
+        <div class="space-y-2">
+          {% for verdict, count in verdict_counts.items() %}
+          {% set colors = {'safe':'bg-green-500','suspicious':'bg-yellow-500','dangerous':'bg-orange-500','malicious':'bg-red-500','unknown':'bg-gray-500'} %}
+          <div class="flex items-center gap-3">
+            <span class="w-2 h-2 rounded-full {{ colors.get(verdict, 'bg-gray-500') }}"></span>
+            <span class="text-sm text-gray-300 capitalize flex-1">{{ verdict }}</span>
+            <span class="text-sm text-gray-400 tabular-nums">{{ '{:,}'.format(count) }}</span>
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="text-sm text-gray-500">No scans yet. <a href="/scan" class="text-brand-400">Try the portal →</a></p>
+      {% endif %}
+    </div>
+
+    <div class="bg-surface-900 border border-white/5 rounded-xl p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-sm font-semibold text-gray-300">Recent scans</h2>
+        <a href="{{ url_for('app.history') }}" class="text-xs text-brand-400 hover:text-brand-300">View all →</a>
+      </div>
+      {% if recent %}
+        <ul class="divide-y divide-white/5">
+          {% for r in recent[:6] %}
+          <li class="py-2.5 flex items-center gap-3 min-w-0">
+            {% set c = {'safe':'bg-green-500','suspicious':'bg-yellow-500','dangerous':'bg-orange-500','malicious':'bg-red-500','unknown':'bg-gray-500'} %}
+            <span class="w-1.5 h-1.5 rounded-full {{ c.get(r.scan.verdict,'bg-gray-500') }}"></span>
+            <span class="text-sm text-gray-300 flex-1 truncate font-mono">{{ r.scan.address_raw }}</span>
+            <span class="text-xs text-gray-500">{{ r.source }}</span>
+          </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-sm text-gray-500">No scans yet.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

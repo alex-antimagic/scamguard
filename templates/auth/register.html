@@ -1,0 +1,39 @@
+{% extends "auth/_layout.html" %}
+{% block title %}Create your account — ScamGuard{% endblock %}
+{% block content %}
+<div class="bg-surface-900 border border-white/5 rounded-2xl p-8">
+  <h1 class="text-2xl font-bold text-white mb-1">Create your account</h1>
+  <p class="text-sm text-gray-400 mb-6">Free tier includes 100 scans/month and 1 API key.</p>
+
+  <form method="POST" class="space-y-4">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-1.5">Name</label>
+      <input type="text" name="name" value="{{ name or '' }}" autocomplete="name"
+        class="w-full bg-surface-800 border border-surface-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-brand-500" />
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-1.5">Email</label>
+      <input type="email" name="email" value="{{ email or '' }}" required autocomplete="email"
+        class="w-full bg-surface-800 border border-surface-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-brand-500" />
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-1.5">Password</label>
+      <input type="password" name="password" required minlength="8" autocomplete="new-password"
+        class="w-full bg-surface-800 border border-surface-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-brand-500" />
+      <p class="text-xs text-gray-500 mt-1">Minimum 8 characters</p>
+    </div>
+
+    <button type="submit" class="w-full bg-brand-500 hover:bg-brand-600 text-white font-semibold rounded-xl px-4 py-2.5 transition-colors">
+      Create account
+    </button>
+  </form>
+
+  <p class="text-sm text-gray-400 mt-6 text-center">
+    Already have an account? <a href="{{ url_for('auth.login') }}" class="text-brand-400 hover:text-brand-300">Sign in</a>
+  </p>
+</div>
+{% endblock %}

@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "ScamGuard API",
-    "description": "Universal scam and fraud lookup API. Check any URL, phone number, Instagram handle, or WhatsApp number for scam indicators. Combines heuristic analysis, community reports, and external threat intelligence to produce a risk score and verdict.\n\n## Authentication\nNo authentication required for MVP. Rate limits are enforced per IP address.\n\n## Rate Limits\n| Endpoint | Limit |\n|----------|-------|\n| `POST /api/v1/scan` | 30/minute, 500/day |\n| `GET /api/v1/scan/{token}` | 60/minute |\n| `POST /api/v1/report` | 10/hour |\n\n## Address Types\nThe API auto-detects the input type:\n- **URL** — `https://example.com`, `example.com`\n- **Phone** — `+1 (555) 123-4567`, `5551234567`\n- **Instagram** — `@handle`, `instagram.com/handle`\n- **WhatsApp** — `wa.me/1234567890`\n\n## Verdicts\n| Score | Verdict |\n|-------|---------|\n| 0–20 | `safe` |\n| 21–50 | `suspicious` |\n| 51–80 | `dangerous` |\n| 81–100 | `malicious` |",
+    "description": "Universal scam and fraud lookup API. Check any URL, phone number, Instagram handle, or WhatsApp number for scam indicators. Combines heuristic analysis, community reports, and external threat intelligence to produce a risk score and verdict.\n\n## Authentication\nAuthenticate with an API key via the `Authorization: Bearer <key>` header. Get a free API key at [/auth/register](/auth/register) — includes 100 scans/month. Unauthenticated requests are allowed but limited to 10/day per IP.\n\n```\ncurl -X POST https://scamguard-6727ac7c29b7.herokuapp.com/api/v1/scan \\\n  -H 'Authorization: Bearer sg_live_...' \\\n  -H 'Content-Type: application/json' \\\n  -d '{\"address\":\"https://example.com\"}'\n```\n\n## Plans & Quotas\n| Plan | Monthly scans | API keys | Overage |\n|------|---------------|----------|---------|\n| Anonymous | 10/day/IP | — | — |\n| Free | 100 | 1 | — (hard cap) |\n| Starter | 10,000 | 3 | $0.01/scan |\n| Pro | 100,000 | 10 | $0.005/scan |\n| Enterprise | Custom | 100+ | Custom |\n\n## Address Types\nThe API auto-detects the input type:\n- **URL** — `https://example.com`, `example.com`\n- **Phone** — `+1 (555) 123-4567`, `5551234567`\n- **Instagram** — `@handle`, `instagram.com/handle`\n- **WhatsApp** — `wa.me/1234567890`\n\nPhone & WhatsApp numbers are normalized to E.164 format in the response.\n\n## Verdicts\n| Score | Verdict |\n|-------|---------|\n| 0–20 | `safe` |\n| 21–50 | `suspicious` |\n| 51–80 | `dangerous` |\n| 81–100 | `malicious` |",
     "version": "1.0.0",
     "contact": {
       "name": "ScamGuard",
@@ -20,8 +20,9 @@
       "post": {
         "operationId": "scanAddress",
         "summary": "Scan an address for scam indicators",
-        "description": "Submit a URL, phone number, Instagram handle, or WhatsApp number for analysis. The system auto-detects the address type, runs type-specific analyzers (heuristics, blocklists, WHOIS, DNS), checks the internal reports database, and returns a risk score with detailed findings.",
+        "description": "Submit a URL, phone number, Instagram handle, or WhatsApp number for analysis. The system auto-detects the address type, runs type-specific analyzers (heuristics, blocklists, WHOIS, DNS), checks the internal reports database, and returns a risk score with detailed findings.\n\nAuth is optional — without an API key you get 10 scans/day per IP. With a key, your plan's monthly quota applies.",
         "tags": ["Scan"],
+        "security": [{"ApiKeyAuth": []}, {}],
         "requestBody": {
           "required": true,
           "content": {
@@ -237,6 +238,14 @@
     }
   },
   "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "sg_live_...",
+        "description": "API key (format: sg_live_...). Get one at /auth/register."
+      }
+    },
     "schemas": {
       "ScanRequest": {
         "type": "object",

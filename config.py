@@ -14,6 +14,16 @@ class Config:
     SCAN_CACHE_TTL = int(os.environ.get('SCAN_CACHE_TTL', 3600))
     ANALYSIS_TIMEOUT = int(os.environ.get('ANALYSIS_TIMEOUT', 10))
 
+    # Public base URL for email links
+    APP_BASE_URL = os.environ.get('APP_BASE_URL', 'http://localhost:5555')
+
+    # Stripe
+    STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
+    STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY', '')
+    STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
+    STRIPE_STARTER_PRICE_ID = os.environ.get('STRIPE_STARTER_PRICE_ID', '')
+    STRIPE_PRO_PRICE_ID = os.environ.get('STRIPE_PRO_PRICE_ID', '')
+
     # Rate limiting — Heroku Redis uses self-signed certs
     _redis_url = os.environ.get('REDIS_URL', 'memory://')
     RATELIMIT_STORAGE_URI = _redis_url

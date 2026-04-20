@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ScamGuard — Scam & Fraud Detection API for Developers</title>
+  <meta name="description" content="Detect phishing URLs, scam phone numbers, and fraudulent Instagram and WhatsApp accounts via a single API. Trusted by email security vendors, marketplaces, and fintech teams." />
+  <meta name="keywords" content="scam detection API, phishing URL checker, fraud API, phone number fraud, trust and safety API, anti-fraud developer API" />
+  <meta property="og:title" content="ScamGuard — Scam Detection API for Developers" />
+  <meta property="og:description" content="One API. URLs, phone numbers, Instagram handles, WhatsApp numbers. 9 signal sources. Sub-300ms p95. Start free." />
+  <meta property="og:type" content="website" />
+  <meta name="robots" content="index, follow" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              400: '#38bdf8',
+              500: '#0ea5e9',
+              600: '#0284c7',
+              700: '#0369a1',
+            },
+            surface: {
+              700: '#1e2128',
+              800: '#1a1d23',
+              900: '#111318',
+              950: '#0b0d11',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Fira Code', 'Consolas', 'monospace'],
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+    * { box-sizing: border-box; }
+    body { font-family: 'Inter', system-ui, sans-serif; background-color: #0b0d11; color: #d1d5db; }
+
+    /* Subtle dot grid */
+    .bg-dots {
+      background-image: radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px);
+      background-size: 28px 28px;
+    }
+
+    /* Hero glow */
+    .hero-glow {
+      background: radial-gradient(ellipse 70% 55% at 50% 40%, rgba(14,165,233,0.07) 0%, transparent 70%);
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: #0b0d11; }
+    ::-webkit-scrollbar-thumb { background: #1e2128; border-radius: 3px; }
+
+    /* Demo input */
+    .demo-input:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(14,165,233,0.45), 0 0 20px rgba(14,165,233,0.1);
+    }
+
+    /* Code block syntax colors */
+    .tok-key    { color: #38bdf8; }
+    .tok-str    { color: #86efac; }
+    .tok-num    { color: #fca5a5; }
+    .tok-kw     { color: #c084fc; }
+    .tok-cmt    { color: #4b5563; font-style: italic; }
+    .tok-fn     { color: #fbbf24; }
+    .tok-op     { color: #94a3b8; }
+    .tok-var    { color: #e2e8f0; }
+    .tok-punc   { color: #6b7280; }
+    .tok-header { color: #a5b4fc; }
+    .tok-url    { color: #67e8f9; }
+
+    /* Tab active state */
+    .code-tab.active {
+      background: #1a1d23;
+      color: #e2e8f0;
+      border-bottom-color: #0ea5e9;
+    }
+
+    /* Scroll-fade-in animation */
+    .fade-up {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .fade-up.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Pricing card hover */
+    .pricing-card {
+      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    }
+    .pricing-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 16px 40px rgba(0,0,0,0.4);
+    }
+
+    /* Demo result pulse */
+    @keyframes resultPop {
+      0%   { opacity: 0; transform: scale(0.97) translateY(6px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .result-pop { animation: resultPop 0.25s ease-out forwards; }
+
+    /* Spinner */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner-sm {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(14,165,233,0.25);
+      border-top-color: #0ea5e9;
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+      display: inline-block;
+    }
+
+    /* Step connector line */
+    .step-connector {
+      width: 2px;
+      background: linear-gradient(to bottom, #0ea5e9, transparent);
+      margin: 0 auto;
+      height: 32px;
+    }
+
+    /* Quota bar */
+    .quota-bar-fill {
+      transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Details/summary FAQ */
+    details summary { cursor: pointer; list-style: none; }
+    details summary::-webkit-details-marker { display: none; }
+    details summary::marker { display: none; }
+    details[open] .faq-chevron { transform: rotate(180deg); }
+    .faq-chevron { transition: transform 0.2s ease; }
+
+    /* Nav link hover */
+    .nav-link { transition: color 0.15s ease; }
+    .nav-link:hover { color: #e5e7eb; }
+
+    /* Use case card hover */
+    .use-case-card { transition: background 0.18s ease, border-color 0.18s ease; }
+    .use-case-card:hover { background: #1a1d23; border-color: rgba(14,165,233,0.2); }
+  </style>
+</head>
+<body class="min-h-screen antialiased">
+
+  <!-- Background layers -->
+  <div class="fixed inset-0 bg-dots pointer-events-none z-0"></div>
+  <div class="fixed inset-0 hero-glow pointer-events-none z-0"></div>
+
+  <!-- ============================================================ -->
+  <!-- HEADER                                                        -->
+  <!-- ============================================================ -->
+  <header class="relative z-50 border-b border-white/5 bg-surface-950/80 backdrop-blur-md sticky top-0">
+    <div class="max-w-6xl mx-auto flex items-center justify-between px-5 py-3.5">
+
+      <!-- Logo -->
+      <a href="/" class="flex items-center gap-2 shrink-0">
+        <svg class="w-6 h-6 text-brand-400" viewBox="0 0 24 24" fill="none">
+          <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.25C17.25 22.15 21 17.25 21 12V7L12 2z" fill="currentColor" fill-opacity="0.15" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+          <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span class="text-white font-semibold text-lg tracking-tight">ScamGuard</span>
+      </a>
+
+      <!-- Nav links — hidden on mobile -->
+      <nav class="hidden md:flex items-center gap-7 text-sm text-gray-400">
+        <a href="#features" class="nav-link">Features</a>
+        <a href="#pricing" class="nav-link">Pricing</a>
+        <a href="/api" class="nav-link">API Docs</a>
+      </nav>
+
+      <!-- CTA buttons -->
+      <div class="flex items-center gap-2.5">
+        <a href="/auth/login" class="hidden sm:inline-flex text-sm text-gray-400 hover:text-white px-3 py-1.5 transition-colors">
+          Sign in
+        </a>
+        <a href="/auth/register" class="inline-flex items-center gap-1.5 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-all shadow-lg shadow-brand-500/10">
+          Get API key
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+        </a>
+      </div>
+    </div>
+  </header>
+
+
+  <!-- ============================================================ -->
+  <!-- HERO                                                          -->
+  <!-- ============================================================ -->
+  <section class="relative z-10 pt-20 pb-16 px-5">
+    <div class="max-w-4xl mx-auto text-center">
+
+      <!-- Badge -->
+      <div class="inline-flex items-center gap-2 bg-brand-500/10 border border-brand-500/20 rounded-full px-3.5 py-1.5 text-xs font-medium text-brand-400 mb-8">
+        <span class="w-1.5 h-1.5 rounded-full bg-brand-400 animate-pulse"></span>
+        Live API &mdash; free tier available, no credit card required
+      </div>
+
+      <!-- Headline -->
+      <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white tracking-tight leading-tight mb-5">
+        Scam detection API<br class="hidden sm:block" />
+        <span class="text-brand-400">for developers</span>
+      </h1>
+
+      <!-- Subhead -->
+      <p class="text-lg sm:text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed mb-10">
+        One endpoint. Paste a URL, phone number, Instagram handle, or WhatsApp number &mdash;
+        get back a 0&ndash;100 risk score powered by 9 signal sources in under 300ms.
+      </p>
+
+      <!-- Primary CTAs -->
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-3 mb-14">
+        <a href="/auth/register" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white font-semibold px-7 py-3.5 rounded-xl transition-all shadow-xl shadow-brand-500/15 text-base">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+          Get free API key
+        </a>
+        <a href="/api" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-surface-800 hover:bg-surface-700 border border-white/10 hover:border-white/20 text-gray-200 font-semibold px-7 py-3.5 rounded-xl transition-all text-base">
+          <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          See API docs
+        </a>
+      </div>
+
+      <!-- Live demo box -->
+      <div class="max-w-2xl mx-auto">
+        <div class="bg-surface-900 border border-white/8 rounded-2xl overflow-hidden shadow-2xl">
+
+          <!-- Demo header bar -->
+          <div class="flex items-center gap-2 px-4 py-3 border-b border-white/5 bg-surface-800/50">
+            <div class="flex gap-1.5">
+              <div class="w-3 h-3 rounded-full bg-red-500/60"></div>
+              <div class="w-3 h-3 rounded-full bg-yellow-500/60"></div>
+              <div class="w-3 h-3 rounded-full bg-green-500/60"></div>
+            </div>
+            <span class="text-xs text-gray-600 ml-2 font-mono">POST /api/v1/scan</span>
+            <span class="ml-auto text-xs text-gray-600">Live</span>
+          </div>
+
+          <!-- Input area -->
+          <div class="p-5">
+            <div class="flex gap-2">
+              <input
+                id="demoInput"
+                type="text"
+                autocomplete="off"
+                spellcheck="false"
+                placeholder="Try it — paste a URL, phone, or @handle"
+                class="demo-input flex-1 bg-surface-800 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-600 transition-all"
+                onkeydown="if(event.key==='Enter') runDemoScan()"
+              />
+              <button
+                id="demoBtn"
+                onclick="runDemoScan()"
+                class="flex items-center gap-2 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-all whitespace-nowrap disabled:opacity-50"
+              >
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z"/></svg>
+                Scan
+              </button>
+            </div>
+
+            <!-- Quick examples -->
+            <div class="flex flex-wrap gap-2 mt-3">
+              <span class="text-xs text-gray-600">Try:</span>
+              <button onclick="setDemo('http://paypa1-security-alert.com/verify')" class="text-xs text-gray-500 hover:text-brand-400 bg-surface-800 hover:bg-surface-700 border border-white/8 rounded-md px-2.5 py-1 transition-all">paypa1-security-alert.com</button>
+              <button onclick="setDemo('+1-800-555-0147')" class="text-xs text-gray-500 hover:text-brand-400 bg-surface-800 hover:bg-surface-700 border border-white/8 rounded-md px-2.5 py-1 transition-all">+1-800-555-0147</button>
+              <button onclick="setDemo('@crypto_doubler_official')" class="text-xs text-gray-500 hover:text-brand-400 bg-surface-800 hover:bg-surface-700 border border-white/8 rounded-md px-2.5 py-1 transition-all">@crypto_doubler_official</button>
+            </div>
+
+            <!-- Demo result -->
+            <div id="demoResult" class="hidden mt-4"></div>
+
+            <!-- Quota indicator -->
+            <div id="demoQuota" class="hidden mt-3 flex items-center gap-3">
+              <div class="flex-1 bg-surface-800 rounded-full h-1 overflow-hidden">
+                <div id="demoQuotaBar" class="quota-bar-fill h-full bg-brand-500 rounded-full" style="width:0%"></div>
+              </div>
+              <span id="demoQuotaText" class="text-xs text-gray-600 whitespace-nowrap shrink-0"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ============================================================ -->
+  <!-- TRUST STRIP                                                   -->
+  <!-- ============================================================ -->
+  <section class="relative z-10 py-8 border-y border-white/5">
+    <div class="max-w-4xl mx-auto px-5">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+
+        <div class="flex flex-col items-center text-center p-4 bg-surface-900/60 rounded-xl border border-white/5">
+          <span class="text-2xl font-bold text-white mb-0.5">9</span>
+          <span class="text-xs text-gray-500">Signal sources</span>
+        </div>
+
+        <div class="flex flex-col items-center text-center p-4 bg-surface-900/60 rounded-xl border border-white/5">
+          <span class="text-2xl font-bold text-white mb-0.5">Community</span>
+          <span class="text-xs text-gray-500">Reported database</span>
+        </div>
+
+        <div class="flex flex-col items-center text-center p-4 bg-surface-900/60 rounded-xl border border-white/5">
+          <span class="text-2xl font-bold text-white mb-0.5">&lt;300ms</span>
+          <span class="text-xs text-gray-500">p95 latency</span>
+        </div>
+
+        <div class="flex flex-col items-center text-center p-4 bg-surface-900/60 rounded-xl border border-white/5">
+          <span class="text-lg font-bold text-white mb-0.5">Web Risk</span>
+          <span class="text-xs text-gray-500">Google-powered</span>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ============================================================ -->
+  <!-- HOW IT WORKS                                                  -->
+  <!-- ============================================================ -->
+  <section id="features" class="relative z-10 py-20 px-5">
+    <div class="max-w-4xl mx-auto">
+
+      <div class="text-center mb-14 fade-up">
+        <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4">How it works</h2>
+        <p class="text-gray-400 max-w-xl mx-auto">Three steps from integration to verdict. No ML training, no configuration, no cold start.</p>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-0 md:gap-6">
+
+        <!-- Step 1 -->
+        <div class="fade-up flex flex-col items-center text-center">
+          <div class="w-14 h-14 rounded-2xl bg-brand-500/10 border border-brand-500/20 flex items-center justify-center mb-5">
+            <svg class="w-7 h-7 text-brand-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z"/>
+            </svg>
+          </div>
+          <div class="w-8 h-8 rounded-full bg-surface-800 border border-white/10 flex items-center justify-center text-xs font-bold text-gray-300 mb-4">1</div>
+          <h3 class="text-lg font-semibold text-white mb-2">Send the suspect input</h3>
+          <p class="text-sm text-gray-400 leading-relaxed">POST any URL, phone number, Instagram handle, or WhatsApp number to <code class="text-brand-400 text-xs bg-surface-800 px-1.5 py-0.5 rounded">/api/v1/scan</code> with your API key in the header.</p>
+        </div>
+
+        <!-- Connector (desktop only) -->
+        <div class="hidden md:flex items-center justify-center pt-8">
+          <div class="flex items-center gap-0 w-full">
+            <div class="flex-1 h-px bg-gradient-to-r from-transparent via-brand-500/30 to-transparent"></div>
+            <svg class="w-4 h-4 text-brand-500/40 shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l10 10-10 10V2z"/></svg>
+          </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="fade-up flex flex-col items-center text-center" style="transition-delay:0.1s">
+          <div class="w-14 h-14 rounded-2xl bg-brand-500/10 border border-brand-500/20 flex items-center justify-center mb-5">
+            <svg class="w-7 h-7 text-brand-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
+            </svg>
+          </div>
+          <div class="w-8 h-8 rounded-full bg-surface-800 border border-white/10 flex items-center justify-center text-xs font-bold text-gray-300 mb-4">2</div>
+          <h3 class="text-lg font-semibold text-white mb-2">9 analyzers run in parallel</h3>
+          <p class="text-sm text-gray-400 leading-relaxed">Google Web Risk, URL heuristics, WHOIS domain age, DNS reputation, community reports, web search intelligence, and platform-specific checks all run simultaneously.</p>
+        </div>
+
+        <!-- Connector (desktop only) -->
+        <div class="hidden md:flex items-center justify-center pt-8">
+          <div class="flex items-center gap-0 w-full">
+            <div class="flex-1 h-px bg-gradient-to-r from-transparent via-brand-500/30 to-transparent"></div>
+            <svg class="w-4 h-4 text-brand-500/40 shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l10 10-10 10V2z"/></svg>
+          </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="fade-up flex flex-col items-center text-center" style="transition-delay:0.2s">
+          <div class="w-14 h-14 rounded-2xl bg-brand-500/10 border border-brand-500/20 flex items-center justify-center mb-5">
+            <svg class="w-7 h-7 text-brand-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+          <div class="w-8 h-8 rounded-full bg-surface-800 border border-white/10 flex items-center justify-center text-xs font-bold text-gray-300 mb-4">3</div>
+          <h3 class="text-lg font-semibold text-white mb-2">Get an actionable verdict</h3>
+          <p class="text-sm text-gray-400 leading-relaxed">A 0&ndash;100 risk score, a <code class="text-brand-400 text-xs bg-surface-800 px-1.5 py-0.5 rounded">verdict</code> field (<code class="text-green-400 text-xs bg-surface-800 px-1.5 py-0.5 rounded">safe</code>/<code class="text-yellow-400 text-xs bg-surface-800 px-1.5 py-0.5 rounded">suspicious</code>/<code class="text-orange-400 text-xs bg-surface-800 px-1.5 py-0.5 rounded">dangerous</code>/<code class="text-red-400 text-xs bg-surface-800 px-1.5 py-0.5 rounded">malicious</code>), and specific findings your UI can display or your logic can act on.</p>
+        </div>
+
+      </div>
+
+      <!-- Analyzer tags -->
+      <div class="fade-up mt-12 flex flex-wrap justify-center gap-2">
+        <span class="text-xs text-gray-600 self-center mr-1">Analyzers:</span>
+        <span class="text-xs bg-surface-800 border border-white/8 rounded-full px-3 py-1 text-gray-400">Google Web Risk</span>
+        <span class="text-xs bg-surface-800 border border-white/8 rounded-full px-3 py-1 text-gray-400">URL Heuristics</span>
+        <span class="text-xs bg-surface-800 border border-white/8 rounded-full px-3 py-1 text-gray-400">WHOIS / Domain Age</span>
+        <span class="text-xs bg-surface-800 border border-white/8 rounded-full px-3 py-1 text-gray-400">DNS Reputation</span>
+        <span class="text-xs bg-surface-800 border border-white/8 rounded-full px-3 py-1 text-gray-400">Community Reports</span>
+        <span class="text-xs bg-surface-800 border border-white/8 rounded-full px-3 py-1 text-gray-400">Web Search</span>
+        <span class="text-xs bg-surface-800 border border-white/8 rounded-full px-3 py-1 text-gray-400">Phone Analysis</span>
+        <span class="text-xs bg-surface-800 border border-white/8 rounded-full px-3 py-1 text-gray-400">Instagram Signals</span>
+        <span class="text-xs bg-surface-800 border border-white/8 rounded-full px-3 py-1 text-gray-400">WhatsApp Signals</span>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ============================================================ -->
+  <!-- USE CASES                                                     -->
+  <!-- ============================================================ -->
+  <section class="relative z-10 py-20 px-5 border-t border-white/5">
+    <div class="max-w-5xl mx-auto">
+
+      <div class="text-center mb-14 fade-up">
+        <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4">Built for teams that can't afford false negatives</h2>
+        <p class="text-gray-400 max-w-xl mx-auto">Fraud slips through in milliseconds. Your detection has to match that speed.</p>
+      </div>
+
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+        <!-- Email security -->
+        <div class="use-case-card fade-up p-6 bg-surface-900 border border-white/6 rounded-2xl">
+          <div class="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mb-4">
+            <svg class="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/>
+            </svg>
+          </div>
+          <h3 class="text-white font-semibold mb-2">Email security</h3>
+          <p class="text-sm text-gray-400 leading-relaxed">Scan every URL in inbound mail before it reaches the inbox. Catch credential harvesting pages that bypass link reputation lists.</p>
+        </div>
+
+        <!-- Marketplaces -->
+        <div class="use-case-card fade-up p-6 bg-surface-900 border border-white/6 rounded-2xl" style="transition-delay:0.05s">
+          <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-4">
+            <svg class="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349M3.75 21V9.349m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016c.896 0 1.7-.393 2.25-1.016a3.001 3.001 0 003.75.614m-16.5 0a3.004 3.004 0 01-.621-4.72l1.189-1.19A1.5 1.5 0 015.378 3h13.243a1.5 1.5 0 011.06.44l1.19 1.189a3 3 0 01-.621 4.72"/>
+            </svg>
+          </div>
+          <h3 class="text-white font-semibold mb-2">Marketplaces</h3>
+          <p class="text-sm text-gray-400 leading-relaxed">Verify seller contact info, linked social handles, and external URLs before allowing listings or payouts. Reduce chargebacks from synthetic identities.</p>
+        </div>
+
+        <!-- Messaging apps -->
+        <div class="use-case-card fade-up p-6 bg-surface-900 border border-white/6 rounded-2xl" style="transition-delay:0.1s">
+          <div class="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mb-4">
+            <svg class="w-5 h-5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"/>
+            </svg>
+          </div>
+          <h3 class="text-white font-semibold mb-2">Messaging apps</h3>
+          <p class="text-sm text-gray-400 leading-relaxed">Flag WhatsApp numbers and Instagram handles at user onboarding or message send. Block known scammers before they reach your users.</p>
+        </div>
+
+        <!-- Fintech KYC -->
+        <div class="use-case-card fade-up p-6 bg-surface-900 border border-white/6 rounded-2xl" style="transition-delay:0.15s">
+          <div class="w-10 h-10 rounded-xl bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center mb-4">
+            <svg class="w-5 h-5 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z"/>
+            </svg>
+          </div>
+          <h3 class="text-white font-semibold mb-2">Fintech KYC</h3>
+          <p class="text-sm text-gray-400 leading-relaxed">Cross-reference phone numbers against scam databases during account creation. One signal can stop a fraudulent onboarding before it costs you a reversal.</p>
+        </div>
+
+        <!-- Customer support -->
+        <div class="use-case-card fade-up p-6 bg-surface-900 border border-white/6 rounded-2xl" style="transition-delay:0.2s">
+          <div class="w-10 h-10 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center mb-4">
+            <svg class="w-5 h-5 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/>
+            </svg>
+          </div>
+          <h3 class="text-white font-semibold mb-2">Customer support</h3>
+          <p class="text-sm text-gray-400 leading-relaxed">Let support agents triage "is this URL legit?" in seconds without leaving their tooling. Embed the API directly in Zendesk, Intercom, or your internal console.</p>
+        </div>
+
+        <!-- CTA card -->
+        <div class="fade-up p-6 bg-brand-500/5 border border-brand-500/15 rounded-2xl flex flex-col justify-between" style="transition-delay:0.25s">
+          <div>
+            <h3 class="text-white font-semibold mb-2">Your use case</h3>
+            <p class="text-sm text-gray-400 leading-relaxed">If you're building anything that touches user-generated content, contact info, or external URLs, there's a good chance ScamGuard fits.</p>
+          </div>
+          <a href="/auth/register" class="mt-5 inline-flex items-center gap-1.5 text-brand-400 hover:text-brand-300 text-sm font-medium transition-colors">
+            Start building free
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+          </a>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ============================================================ -->
+  <!-- API SNIPPET                                                   -->
+  <!-- ============================================================ -->
+  <section class="relative z-10 py-20 px-5 border-t border-white/5">
+    <div class="max-w-5xl mx-auto">
+
+      <div class="text-center mb-12 fade-up">
+        <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4">Integration is one POST request</h2>
+        <p class="text-gray-400 max-w-xl mx-auto">No SDK required. If your language can make an HTTP request, you're done.</p>
+      </div>
+
+      <div class="fade-up bg-surface-900 border border-white/8 rounded-2xl overflow-hidden shadow-2xl">
+
+        <!-- Tab bar -->
+        <div class="flex items-center border-b border-white/5 bg-surface-800/40 overflow-x-auto">
+          <button class="code-tab active text-xs font-mono px-5 py-3 border-b-2 border-transparent text-gray-400 transition-colors hover:text-gray-200 whitespace-nowrap" onclick="switchTab('curl')">curl</button>
+          <button class="code-tab text-xs font-mono px-5 py-3 border-b-2 border-transparent text-gray-400 transition-colors hover:text-gray-200 whitespace-nowrap" onclick="switchTab('python')">Python</button>
+          <button class="code-tab text-xs font-mono px-5 py-3 border-b-2 border-transparent text-gray-400 transition-colors hover:text-gray-200 whitespace-nowrap" onclick="switchTab('node')">Node.js</button>
+        </div>
+
+        <!-- Two-column layout: request | response -->
+        <div class="grid lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-white/5">
+
+          <!-- Request panel -->
+          <div class="p-5">
+            <div class="flex items-center gap-2 mb-4">
+              <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Request</span>
+            </div>
+
+            <!-- curl -->
+            <pre id="tab-curl" class="text-xs leading-relaxed font-mono overflow-x-auto"><code><span class="tok-kw">curl</span> <span class="tok-op">-X</span> POST <span class="tok-op">\</span>
+  <span class="tok-str">'https://scamguard-6727ac7c29b7.herokuapp.com/api/v1/scan'</span> <span class="tok-op">\</span>
+  <span class="tok-op">-H</span> <span class="tok-str">'X-API-Key: sg_live_your_key_here'</span> <span class="tok-op">\</span>
+  <span class="tok-op">-H</span> <span class="tok-str">'Content-Type: application/json'</span> <span class="tok-op">\</span>
+  <span class="tok-op">-d</span> <span class="tok-str">'{
+    "address": "http://paypa1-login.com"
+  }'</span></code></pre>
+
+            <!-- python -->
+            <pre id="tab-python" class="hidden text-xs leading-relaxed font-mono overflow-x-auto"><code><span class="tok-kw">import</span> <span class="tok-var">requests</span>
+
+<span class="tok-var">resp</span> <span class="tok-op">=</span> <span class="tok-var">requests</span><span class="tok-punc">.</span><span class="tok-fn">post</span><span class="tok-punc">(</span>
+    <span class="tok-str">"https://scamguard-6727ac7c29b7.herokuapp.com/api/v1/scan"</span><span class="tok-punc">,</span>
+    <span class="tok-var">headers</span><span class="tok-op">=</span><span class="tok-punc">{</span>
+        <span class="tok-str">"X-API-Key"</span><span class="tok-punc">:</span> <span class="tok-str">"sg_live_your_key_here"</span><span class="tok-punc">,</span>
+        <span class="tok-str">"Content-Type"</span><span class="tok-punc">:</span> <span class="tok-str">"application/json"</span><span class="tok-punc">,</span>
+    <span class="tok-punc">},</span>
+    <span class="tok-var">json</span><span class="tok-op">=</span><span class="tok-punc">{</span><span class="tok-str">"address"</span><span class="tok-punc">:</span> <span class="tok-str">"http://paypa1-login.com"</span><span class="tok-punc">},</span>
+<span class="tok-punc">)</span>
+
+<span class="tok-var">result</span> <span class="tok-op">=</span> <span class="tok-var">resp</span><span class="tok-punc">.</span><span class="tok-fn">json</span><span class="tok-punc">()</span>
+<span class="tok-fn">print</span><span class="tok-punc">(</span><span class="tok-var">result</span><span class="tok-punc">[</span><span class="tok-str">"verdict"</span><span class="tok-punc">],</span> <span class="tok-var">result</span><span class="tok-punc">[</span><span class="tok-str">"risk_score"</span><span class="tok-punc">])</span></code></pre>
+
+            <!-- node -->
+            <pre id="tab-node" class="hidden text-xs leading-relaxed font-mono overflow-x-auto"><code><span class="tok-kw">const</span> <span class="tok-var">resp</span> <span class="tok-op">=</span> <span class="tok-kw">await</span> <span class="tok-fn">fetch</span><span class="tok-punc">(</span>
+  <span class="tok-str">'https://scamguard-6727ac7c29b7.herokuapp.com/api/v1/scan'</span><span class="tok-punc">,</span>
+  <span class="tok-punc">{</span>
+    <span class="tok-key">method</span><span class="tok-punc">:</span> <span class="tok-str">'POST'</span><span class="tok-punc">,</span>
+    <span class="tok-key">headers</span><span class="tok-punc">:</span> <span class="tok-punc">{</span>
+      <span class="tok-str">'X-API-Key'</span><span class="tok-punc">:</span> <span class="tok-str">'sg_live_your_key_here'</span><span class="tok-punc">,</span>
+      <span class="tok-str">'Content-Type'</span><span class="tok-punc">:</span> <span class="tok-str">'application/json'</span><span class="tok-punc">,</span>
+    <span class="tok-punc">},</span>
+    <span class="tok-key">body</span><span class="tok-punc">:</span> <span class="tok-var">JSON</span><span class="tok-punc">.</span><span class="tok-fn">stringify</span><span class="tok-punc">({</span>
+      <span class="tok-key">address</span><span class="tok-punc">:</span> <span class="tok-str">'http://paypa1-login.com'</span>
+    <span class="tok-punc">}),</span>
+  <span class="tok-punc">}</span>
+<span class="tok-punc">);</span>
+
+<span class="tok-kw">const</span> <span class="tok-punc">{</span> <span class="tok-var">verdict</span><span class="tok-punc">,</span> <span class="tok-var">risk_score</span><span class="tok-punc">,</span> <span class="tok-var">findings</span> <span class="tok-punc">}</span> <span class="tok-op">=</span> <span class="tok-kw">await</span> <span class="tok-var">resp</span><span class="tok-punc">.</span><span class="tok-fn">json</span><span class="tok-punc">();</span></code></pre>
+          </div>
+
+          <!-- Response panel -->
+          <div class="p-5">
+            <div class="flex items-center gap-2 mb-4">
+              <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Response</span>
+              <span class="ml-auto text-xs bg-green-900/40 text-green-400 border border-green-800/50 rounded-full px-2 py-0.5">200 OK</span>
+            </div>
+            <pre class="text-xs leading-relaxed font-mono overflow-x-auto"><code><span class="tok-punc">{</span>
+  <span class="tok-key">"verdict"</span><span class="tok-punc">:</span>     <span class="tok-str">"malicious"</span><span class="tok-punc">,</span>
+  <span class="tok-key">"risk_score"</span><span class="tok-punc">:</span>  <span class="tok-num">94</span><span class="tok-punc">,</span>
+  <span class="tok-key">"address"</span><span class="tok-punc">:</span> <span class="tok-punc">{</span>
+    <span class="tok-key">"type"</span><span class="tok-punc">:</span>  <span class="tok-str">"url"</span><span class="tok-punc">,</span>
+    <span class="tok-key">"value"</span><span class="tok-punc">:</span> <span class="tok-str">"http://paypa1-login.com"</span>
+  <span class="tok-punc">},</span>
+  <span class="tok-key">"findings"</span><span class="tok-punc">:</span> <span class="tok-punc">[</span>
+    <span class="tok-punc">{</span>
+      <span class="tok-key">"analyzer"</span><span class="tok-punc">:</span>  <span class="tok-str">"blocklist"</span><span class="tok-punc">,</span>
+      <span class="tok-key">"severity"</span><span class="tok-punc">:</span>  <span class="tok-str">"critical"</span><span class="tok-punc">,</span>
+      <span class="tok-key">"detail"</span><span class="tok-punc">:</span>    <span class="tok-str">"Google Web Risk: SOCIAL_ENGINEERING"</span>
+    <span class="tok-punc">},</span>
+    <span class="tok-punc">{</span>
+      <span class="tok-key">"analyzer"</span><span class="tok-punc">:</span>  <span class="tok-str">"url"</span><span class="tok-punc">,</span>
+      <span class="tok-key">"severity"</span><span class="tok-punc">:</span>  <span class="tok-str">"high"</span><span class="tok-punc">,</span>
+      <span class="tok-key">"detail"</span><span class="tok-punc">:</span>    <span class="tok-str">"Brand impersonation: 'paypal'"</span>
+    <span class="tok-punc">},</span>
+    <span class="tok-punc">{</span>
+      <span class="tok-key">"analyzer"</span><span class="tok-punc">:</span>  <span class="tok-str">"whois"</span><span class="tok-punc">,</span>
+      <span class="tok-key">"severity"</span><span class="tok-punc">:</span>  <span class="tok-str">"medium"</span><span class="tok-punc">,</span>
+      <span class="tok-key">"detail"</span><span class="tok-punc">:</span>    <span class="tok-str">"Domain registered 3 days ago"</span>
+    <span class="tok-punc">}</span>
+  <span class="tok-punc">],</span>
+  <span class="tok-key">"quota"</span><span class="tok-punc">:</span> <span class="tok-punc">{</span>
+    <span class="tok-key">"used"</span><span class="tok-punc">:</span>    <span class="tok-num">12</span><span class="tok-punc">,</span>
+    <span class="tok-key">"limit"</span><span class="tok-punc">:</span>   <span class="tok-num">100</span><span class="tok-punc">,</span>
+    <span class="tok-key">"plan"</span><span class="tok-punc">:</span>    <span class="tok-str">"free"</span>
+  <span class="tok-punc">}</span>
+<span class="tok-punc">}</span></code></pre>
+          </div>
+
+        </div>
+
+        <!-- Bottom strip -->
+        <div class="px-5 py-3 border-t border-white/5 bg-surface-800/20 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-6">
+          <span class="text-xs text-gray-600">Base URL: <code class="text-gray-400 font-mono">https://scamguard-6727ac7c29b7.herokuapp.com</code></span>
+          <a href="/api" class="text-xs text-brand-400 hover:text-brand-300 transition-colors ml-auto">Full API reference &rarr;</a>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ============================================================ -->
+  <!-- PRICING                                                       -->
+  <!-- ============================================================ -->
+  <section id="pricing" class="relative z-10 py-20 px-5 border-t border-white/5">
+    <div class="max-w-5xl mx-auto">
+
+      <div class="text-center mb-14 fade-up">
+        <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4">Predictable pricing, no surprises</h2>
+        <p class="text-gray-400 max-w-xl mx-auto">Start free and stay there if 100 scans/month covers you. Upgrade when you need to scale.</p>
+      </div>
+
+      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
+
+        <!-- Free -->
+        <div class="pricing-card fade-up bg-surface-900 border border-white/8 rounded-2xl p-6 flex flex-col">
+          <div class="mb-6">
+            <div class="text-sm font-semibold text-gray-400 mb-2">Free</div>
+            <div class="text-3xl font-bold text-white">$0<span class="text-base font-normal text-gray-500">/mo</span></div>
+          </div>
+          <ul class="space-y-2.5 mb-8 flex-1">
+            <li class="flex items-start gap-2 text-sm text-gray-400">
+              <svg class="w-4 h-4 text-gray-600 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              100 scans / month
+            </li>
+            <li class="flex items-start gap-2 text-sm text-gray-400">
+              <svg class="w-4 h-4 text-gray-600 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              1 API key
+            </li>
+            <li class="flex items-start gap-2 text-sm text-gray-400">
+              <svg class="w-4 h-4 text-gray-600 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              Hard cap — no surprise charges
+            </li>
+            <li class="flex items-start gap-2 text-sm text-gray-400">
+              <svg class="w-4 h-4 text-gray-600 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              All detection signals
+            </li>
+          </ul>
+          <a href="/auth/register" class="text-center text-sm font-semibold bg-surface-800 hover:bg-surface-700 border border-white/10 text-gray-200 px-4 py-2.5 rounded-lg transition-colors">
+            Start free
+          </a>
+        </div>
+
+        <!-- Starter -->
+        <div class="pricing-card fade-up bg-surface-900 border border-white/8 rounded-2xl p-6 flex flex-col" style="transition-delay:0.05s">
+          <div class="mb-6">
+            <div class="text-sm font-semibold text-gray-400 mb-2">Starter</div>
+            <div class="text-3xl font-bold text-white">$29<span class="text-base font-normal text-gray-500">/mo</span></div>
+          </div>
+          <ul class="space-y-2.5 mb-8 flex-1">
+            <li class="flex items-start gap-2 text-sm text-gray-400">
+              <svg class="w-4 h-4 text-brand-400 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              10,000 scans / month
+            </li>
+            <li class="flex items-start gap-2 text-sm text-gray-400">
+              <svg class="w-4 h-4 text-brand-400 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              3 API keys
+            </li>
+            <li class="flex items-start gap-2 text-sm text-gray-400">
+              <svg class="w-4 h-4 text-brand-400 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              $0.01 / scan overage
+            </li>
+            <li class="flex items-start gap-2 text-sm text-gray-400">
+              <svg class="w-4 h-4 text-brand-400 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              All detection signals
+            </li>
+          </ul>
+          <a href="/auth/register" class="text-center text-sm font-semibold bg-surface-800 hover:bg-surface-700 border border-white/10 text-gray-200 px-4 py-2.5 rounded-lg transition-colors">
+            Subscribe
+          </a>
+        </div>
+
+        <!-- Pro — highlighted -->
+        <div class="pricing-card fade-up bg-surface-900 border border-brand-500/40 rounded-2xl p-6 flex flex-col relative shadow-xl shadow-brand-500/5" style="transition-delay:0.1s">
+          <div class="absolute -top-3 left-1/2 -translate-x-1/2">
+            <span class="bg-brand-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">Most popular</span>
+          </div>
+          <div class="mb-6 mt-2">
+            <div class="text-sm font-semibold text-brand-400 mb-2">Pro</div>
+            <div class="text-3xl font-bold text-white">$199<span class="text-base font-normal text-gray-500">/mo</span></div>
+          </div>
+          <ul class="space-y-2.5 mb-8 flex-1">
+            <li class="flex items-start gap-2 text-sm text-gray-300">
+              <svg class="w-4 h-4 text-brand-400 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              100,000 scans / month
+            </li>
+            <li class="flex items-start gap-2 text-sm text-gray-300">
+              <svg class="w-4 h-4 text-brand-400 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              10 API keys
+            </li>
+            <li class="flex items-start gap-2 text-sm text-gray-300">
+              <svg class="w-4 h-4 text-brand-400 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              $0.005 / scan overage
+            </li>
+            <li class="flex items-start gap-2 text-sm text-gray-300">
+              <svg class="w-4 h-4 text-brand-400 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              All detection signals
+            </li>
+          </ul>
+          <a href="/auth/register" class="text-center text-sm font-semibold bg-brand-500 hover:bg-brand-600 text-white px-4 py-2.5 rounded-lg transition-colors shadow-lg shadow-brand-500/20">
+            Subscribe
+          </a>
+        </div>
+
+        <!-- Enterprise -->
+        <div class="pricing-card fade-up bg-surface-900 border border-white/8 rounded-2xl p-6 flex flex-col" style="transition-delay:0.15s">
+          <div class="mb-6">
+            <div class="text-sm font-semibold text-gray-400 mb-2">Enterprise</div>
+            <div class="text-3xl font-bold text-white">Custom</div>
+          </div>
+          <ul class="space-y-2.5 mb-8 flex-1">
+            <li class="flex items-start gap-2 text-sm text-gray-400">
+              <svg class="w-4 h-4 text-brand-400 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              Unlimited scans
+            </li>
+            <li class="flex items-start gap-2 text-sm text-gray-400">
+              <svg class="w-4 h-4 text-brand-400 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              SSO + audit logs
+            </li>
+            <li class="flex items-start gap-2 text-sm text-gray-400">
+              <svg class="w-4 h-4 text-brand-400 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              SLA + uptime guarantee
+            </li>
+            <li class="flex items-start gap-2 text-sm text-gray-400">
+              <svg class="w-4 h-4 text-brand-400 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              Priority support
+            </li>
+          </ul>
+          <a href="mailto:alex.eastwood@tsgglobal.com?subject=ScamGuard Enterprise" class="text-center text-sm font-semibold bg-surface-800 hover:bg-surface-700 border border-white/10 text-gray-200 px-4 py-2.5 rounded-lg transition-colors">
+            Contact sales
+          </a>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ============================================================ -->
+  <!-- FAQ                                                           -->
+  <!-- ============================================================ -->
+  <section class="relative z-10 py-20 px-5 border-t border-white/5">
+    <div class="max-w-2xl mx-auto">
+
+      <div class="text-center mb-12 fade-up">
+        <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4">Common questions</h2>
+        <p class="text-gray-400">The ones that come up before someone signs up.</p>
+      </div>
+
+      <div class="space-y-2 fade-up">
+
+        <details class="bg-surface-900 border border-white/6 rounded-xl overflow-hidden group">
+          <summary class="flex items-center justify-between px-5 py-4 text-sm font-medium text-gray-200 hover:text-white transition-colors">
+            How accurate is the detection?
+            <svg class="faq-chevron w-4 h-4 text-gray-500 shrink-0 ml-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+          </summary>
+          <div class="px-5 pb-4 text-sm text-gray-400 leading-relaxed">
+            It depends on the input type and threat freshness. For URLs indexed by Google Safe Browsing or reported by our community, accuracy is very high. For novel phishing domains (registered in the last 24 hours), we use domain age, heuristics, and WHOIS signals to catch what blocklists haven't seen yet. We surface per-finding severity so your code can make risk-appropriate decisions rather than relying on a single binary flag.
+          </div>
+        </details>
+
+        <details class="bg-surface-900 border border-white/6 rounded-xl overflow-hidden">
+          <summary class="flex items-center justify-between px-5 py-4 text-sm font-medium text-gray-200 hover:text-white transition-colors">
+            What's included in the free tier?
+            <svg class="faq-chevron w-4 h-4 text-gray-500 shrink-0 ml-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+          </summary>
+          <div class="px-5 pb-4 text-sm text-gray-400 leading-relaxed">
+            The free tier gives you 100 scans per calendar month, 1 API key, and full access to all 9 detection signals — including Google Web Risk. It's a hard cap, so you'll never receive a surprise charge. When you hit 100, the API returns a <code class="text-brand-400 bg-surface-800 px-1.5 py-0.5 rounded text-xs">429</code> with a clear message until the next month resets.
+          </div>
+        </details>
+
+        <details class="bg-surface-900 border border-white/6 rounded-xl overflow-hidden">
+          <summary class="flex items-center justify-between px-5 py-4 text-sm font-medium text-gray-200 hover:text-white transition-colors">
+            How do you handle privacy and GDPR?
+            <svg class="faq-chevron w-4 h-4 text-gray-500 shrink-0 ml-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+          </summary>
+          <div class="px-5 pb-4 text-sm text-gray-400 leading-relaxed">
+            Scans are stored against your API key (not against end-user identifiers), so we never receive PII unless you embed it in the address string — which you shouldn't. For phone number lookups, we process the number as a signal but do not store the raw value beyond the scan record. If you need a DPA or have GDPR-specific requirements, contact us before you go to production.
+          </div>
+        </details>
+
+        <details class="bg-surface-900 border border-white/6 rounded-xl overflow-hidden">
+          <summary class="flex items-center justify-between px-5 py-4 text-sm font-medium text-gray-200 hover:text-white transition-colors">
+            What's your uptime SLA?
+            <svg class="faq-chevron w-4 h-4 text-gray-500 shrink-0 ml-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+          </summary>
+          <div class="px-5 pb-4 text-sm text-gray-400 leading-relaxed">
+            Free and Starter plans come with best-effort availability — the API is deployed on Heroku Standard dynos and has been running without issues, but there's no formal SLA. Pro gets informal priority in incident response. Enterprise plans include a contractual uptime SLA with response-time commitments. If your product depends on this API being up, talk to us about Enterprise.
+          </div>
+        </details>
+
+        <details class="bg-surface-900 border border-white/6 rounded-xl overflow-hidden">
+          <summary class="flex items-center justify-between px-5 py-4 text-sm font-medium text-gray-200 hover:text-white transition-colors">
+            Can I self-host?
+            <svg class="faq-chevron w-4 h-4 text-gray-500 shrink-0 ml-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+          </summary>
+          <div class="px-5 pb-4 text-sm text-gray-400 leading-relaxed">
+            Not currently. Self-hosting would require you to provision and maintain API keys for Google Web Risk, WHOIS lookups, and the community database — effectively rebuilding the service. If data residency or air-gapped deployment is a hard requirement, reach out and we can discuss Enterprise options.
+          </div>
+        </details>
+
+        <details class="bg-surface-900 border border-white/6 rounded-xl overflow-hidden">
+          <summary class="flex items-center justify-between px-5 py-4 text-sm font-medium text-gray-200 hover:text-white transition-colors">
+            How fast is the API?
+            <svg class="faq-chevron w-4 h-4 text-gray-500 shrink-0 ml-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+          </summary>
+          <div class="px-5 pb-4 text-sm text-gray-400 leading-relaxed">
+            Median latency sits around 150&ndash;180ms. p95 is under 300ms on warm dynos. Cold starts on a free Heroku instance can occasionally add 2&ndash;3 seconds after a period of inactivity — if you're on paid plans, dynos stay warm. All 9 analyzers run concurrently, so total latency scales with the slowest signal source, not their sum.
+          </div>
+        </details>
+
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ============================================================ -->
+  <!-- FOOTER CTA BAND                                               -->
+  <!-- ============================================================ -->
+  <section class="relative z-10 py-20 px-5 border-t border-white/5">
+    <div class="max-w-3xl mx-auto text-center fade-up">
+      <div class="bg-surface-900 border border-white/8 rounded-3xl px-8 py-14 relative overflow-hidden">
+        <!-- Glow -->
+        <div class="absolute inset-0 pointer-events-none" style="background:radial-gradient(ellipse 60% 50% at 50% 100%,rgba(14,165,233,0.08) 0%,transparent 70%)"></div>
+
+        <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4 relative z-10">Ready to stop scams?</h2>
+        <p class="text-gray-400 max-w-lg mx-auto mb-8 relative z-10">
+          100 free scans a month, no credit card, no approval process. You're one POST request away from production-grade scam detection.
+        </p>
+        <a href="/auth/register" class="inline-flex items-center gap-2 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white font-bold px-8 py-4 rounded-xl transition-all shadow-2xl shadow-brand-500/20 text-base relative z-10">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+          Get your API key
+        </a>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ============================================================ -->
+  <!-- FOOTER                                                        -->
+  <!-- ============================================================ -->
+  <footer class="relative z-10 border-t border-white/5 py-12 px-5">
+    <div class="max-w-5xl mx-auto">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
+
+        <!-- Brand col -->
+        <div class="col-span-2 md:col-span-1">
+          <a href="/" class="flex items-center gap-2 mb-4">
+            <svg class="w-5 h-5 text-brand-400" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.25C17.25 22.15 21 17.25 21 12V7L12 2z" fill="currentColor" fill-opacity="0.15" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+              <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span class="text-white font-semibold">ScamGuard</span>
+          </a>
+          <p class="text-xs text-gray-600 leading-relaxed">Scam and fraud detection API. Built for trust &amp; safety teams that need answers fast.</p>
+        </div>
+
+        <!-- Product -->
+        <div>
+          <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Product</h4>
+          <ul class="space-y-3">
+            <li><a href="/scan" class="text-sm text-gray-500 hover:text-gray-300 transition-colors">Portal</a></li>
+            <li><a href="/api" class="text-sm text-gray-500 hover:text-gray-300 transition-colors">API Docs</a></li>
+            <li><a href="#pricing" class="text-sm text-gray-500 hover:text-gray-300 transition-colors">Pricing</a></li>
+          </ul>
+        </div>
+
+        <!-- Company -->
+        <div>
+          <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Company</h4>
+          <ul class="space-y-3">
+            <li><a href="#" class="text-sm text-gray-500 hover:text-gray-300 transition-colors">Blog</a></li>
+            <li><a href="mailto:alex.eastwood@tsgglobal.com" class="text-sm text-gray-500 hover:text-gray-300 transition-colors">Contact</a></li>
+          </ul>
+        </div>
+
+        <!-- Legal -->
+        <div>
+          <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Legal</h4>
+          <ul class="space-y-3">
+            <li><a href="#" class="text-sm text-gray-500 hover:text-gray-300 transition-colors">Privacy</a></li>
+            <li><a href="#" class="text-sm text-gray-500 hover:text-gray-300 transition-colors">Terms</a></li>
+          </ul>
+        </div>
+
+      </div>
+
+      <div class="border-t border-white/5 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <span class="text-xs text-gray-600">&copy; 2026 ScamGuard. All rights reserved.</span>
+        <span class="text-xs text-gray-700">Powered by Google Web Risk &middot; 9 signal sources &middot; &lt;300ms p95</span>
+      </div>
+
+    </div>
+  </footer>
+
+
+  <!-- ============================================================ -->
+  <!-- JAVASCRIPT                                                    -->
+  <!-- ============================================================ -->
+  <script>
+    // --------------------------------------------------------
+    // Scroll-based fade-in
+    // --------------------------------------------------------
+    (function () {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.12 });
+
+      document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+    })();
+
+    // --------------------------------------------------------
+    // Code tab switcher
+    // --------------------------------------------------------
+    function switchTab(lang) {
+      // Hide all request panels
+      ['curl', 'python', 'node'].forEach(id => {
+        const el = document.getElementById('tab-' + id);
+        if (el) el.classList.add('hidden');
+      });
+      // Show selected
+      const active = document.getElementById('tab-' + lang);
+      if (active) active.classList.remove('hidden');
+
+      // Update tab styling
+      document.querySelectorAll('.code-tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      event.currentTarget.classList.add('active');
+    }
+
+    // --------------------------------------------------------
+    // Demo scan
+    // --------------------------------------------------------
+    const RISK_CONFIG = {
+      safe:       { label: 'Safe',       dot: '#22c55e', badge: 'bg-green-900/50 text-green-300 border-green-800/50',   score: 'text-green-400' },
+      suspicious: { label: 'Suspicious', dot: '#eab308', badge: 'bg-yellow-900/50 text-yellow-300 border-yellow-800/50', score: 'text-yellow-400' },
+      dangerous:  { label: 'Dangerous',  dot: '#f97316', badge: 'bg-orange-900/50 text-orange-300 border-orange-800/50', score: 'text-orange-400' },
+      malicious:  { label: 'Malicious',  dot: '#ef4444', badge: 'bg-red-900/50 text-red-300 border-red-800/50',          score: 'text-red-400' },
+    };
+
+    const SEV_CONFIG = {
+      info:     { label: 'Info',     cls: 'bg-blue-900/40 text-blue-300',     dot: '#60a5fa' },
+      low:      { label: 'Low',      cls: 'bg-surface-800 text-gray-400',     dot: '#9ca3af' },
+      medium:   { label: 'Medium',   cls: 'bg-yellow-900/40 text-yellow-300', dot: '#fbbf24' },
+      high:     { label: 'High',     cls: 'bg-orange-900/40 text-orange-300', dot: '#fb923c' },
+      critical: { label: 'Critical', cls: 'bg-red-900/40 text-red-300',       dot: '#f87171' },
+    };
+
+    function escHtml(s) {
+      return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function setDemo(val) {
+      document.getElementById('demoInput').value = val;
+      document.getElementById('demoInput').focus();
+    }
+
+    async function runDemoScan() {
+      const input = document.getElementById('demoInput');
+      const address = input.value.trim();
+      if (!address) {
+        input.style.borderColor = '#ef4444';
+        setTimeout(() => input.style.borderColor = '', 1500);
+        return;
+      }
+
+      const btn = document.getElementById('demoBtn');
+      const resultEl = document.getElementById('demoResult');
+      const quotaEl  = document.getElementById('demoQuota');
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-sm"></span>';
+
+      resultEl.innerHTML = '';
+      resultEl.classList.add('hidden');
+      quotaEl.classList.add('hidden');
+
+      try {
+        const res = await fetch('/api/v1/scan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ address }),
+        });
+
+        if (!res.ok) {
+          let msg = `Error ${res.status}`;
+          try { const b = await res.json(); msg = b.error || b.message || msg; } catch (_) {}
+          throw new Error(msg);
+        }
+
+        const data = await res.json();
+        renderDemoResult(data, resultEl, quotaEl);
+
+      } catch (err) {
+        resultEl.innerHTML = `
+          <div class="flex items-center gap-2 text-xs text-red-400 bg-red-900/20 border border-red-800/40 rounded-lg px-3 py-2">
+            <svg class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" d="M12 8v4m0 4h.01"/></svg>
+            ${escHtml(err.message)}
+          </div>`;
+        resultEl.classList.remove('hidden');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z"/></svg> Scan`;
+      }
+    }
+
+    function renderDemoResult(data, resultEl, quotaEl) {
+      const risk   = RISK_CONFIG[data.verdict] || RISK_CONFIG.suspicious;
+      const score  = data.risk_score ?? '—';
+      const findings = (data.findings || []).slice(0, 3);
+
+      // Build findings HTML
+      let findingsHtml = '';
+      if (findings.length > 0) {
+        findingsHtml = `<div class="mt-3 space-y-1.5">` + findings.map(f => {
+          const sev = SEV_CONFIG[f.severity] || SEV_CONFIG.info;
+          return `
+            <div class="flex items-start gap-2 text-xs text-gray-400">
+              <span class="w-1.5 h-1.5 rounded-full shrink-0 mt-1" style="background:${sev.dot}"></span>
+              <span class="${sev.cls} text-xs rounded px-1.5 py-0.5 shrink-0">${sev.label}</span>
+              <span>${escHtml(f.detail || f.analyzer || '')}</span>
+            </div>`;
+        }).join('') + `</div>`;
+      }
+
+      resultEl.innerHTML = `
+        <div class="result-pop flex items-center gap-3 p-3 bg-surface-800 border border-white/8 rounded-xl">
+          <div class="shrink-0 w-10 h-10 rounded-lg flex items-center justify-center" style="background:${risk.dot}18;border:1px solid ${risk.dot}40">
+            <span class="text-sm font-bold ${risk.score}">${score}</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-xs font-semibold border rounded-full px-2 py-0.5 ${risk.badge}">${risk.label}</span>
+              <span class="text-xs text-gray-500 font-mono truncate">${escHtml(data.address?.value || document.getElementById('demoInput').value)}</span>
+            </div>
+            ${findingsHtml}
+          </div>
+        </div>`;
+      resultEl.classList.remove('hidden');
+
+      // Quota indicator
+      if (data.quota && typeof data.quota.used === 'number' && typeof data.quota.limit === 'number') {
+        const { used, limit, plan } = data.quota;
+        const pct = Math.min(100, Math.round((used / limit) * 100));
+        document.getElementById('demoQuotaBar').style.width = pct + '%';
+        document.getElementById('demoQuotaText').textContent =
+          `${used} of ${limit} ${plan || ''} scans used`;
+        quotaEl.classList.remove('hidden');
+      }
+    }
+
+    // --------------------------------------------------------
+    // Smooth scroll for anchor links
+    // --------------------------------------------------------
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          e.preventDefault();
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    });
+  </script>
+
+</body>
+</html>

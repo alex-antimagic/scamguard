@@ -1,0 +1,71 @@
+{% extends "app/_layout.html" %}
+{% block title %}Billing — ScamGuard{% endblock %}
+{% block content %}
+<div class="max-w-5xl mx-auto">
+  <header class="mb-6">
+    <h1 class="text-2xl font-bold text-white">Billing</h1>
+    <p class="text-sm text-gray-400 mt-1">Manage your plan and view usage.</p>
+  </header>
+
+  <!-- Current plan -->
+  <div class="bg-surface-900 border border-white/5 rounded-xl p-6 mb-6">
+    <div class="flex items-start justify-between">
+      <div>
+        <div class="text-xs uppercase tracking-wide text-gray-500 mb-1">Current plan</div>
+        <div class="text-2xl font-bold text-white">{{ plan.display_name }}</div>
+        {% if plan.price_monthly_cents %}
+          <div class="text-sm text-gray-400 mt-1">${{ '{:.2f}'.format(plan.price_monthly_cents / 100) }}/month</div>
+        {% elif subscription.plan_tier == 'free' %}
+          <div class="text-sm text-gray-400 mt-1">Free</div>
+        {% endif %}
+      </div>
+      <div class="flex gap-3">
+        <a href="{{ url_for('billing.upgrade') }}" class="text-sm bg-brand-500 hover:bg-brand-600 text-white font-medium rounded-lg px-4 py-2">
+          {% if subscription.plan_tier == 'free' %}Upgrade plan{% else %}Change plan{% endif %}
+        </a>
+        {% if current_user.stripe_customer_id %}
+        <form method="POST" action="{{ url_for('billing.portal') }}" class="inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="text-sm bg-surface-700 hover:bg-surface-800 text-white font-medium rounded-lg px-4 py-2">
+            Manage billing
+          </button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="mt-6 pt-6 border-t border-white/5">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-sm text-gray-400">This period</span>
+        <span class="text-sm font-medium text-white">
+          {{ '{:,}'.format(scans_this_period) }}<span class="text-gray-500"> / {{ '{:,}'.format(subscription.scans_included) if subscription.scans_included else '∞' }}</span>
+        </span>
+      </div>
+      {% if subscription.scans_included %}
+      {% set pct = (scans_this_period / subscription.scans_included * 100) if subscription.scans_included > 0 else 0 %}
+      <div class="w-full h-2 bg-surface-700 rounded-full overflow-hidden">
+        <div class="h-full {% if pct > 90 %}bg-red-500{% elif pct > 75 %}bg-yellow-500{% else %}bg-brand-500{% endif %}"
+             style="width: {{ pct if pct < 100 else 100 }}%"></div>
+      </div>
+      {% endif %}
+      {% if overage %}
+      <div class="mt-4 text-sm text-gray-300">
+        Overage: <span class="text-yellow-400 font-medium">{{ '{:,}'.format(overage) }} scans</span>
+        — estimated <span class="text-white">${{ '{:.2f}'.format(overage_cost_cents / 100) }}</span> this period
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Plan features + upgrade CTA placeholder -->
+  <div class="bg-surface-900 border border-white/5 rounded-xl p-6">
+    <h2 class="text-sm font-semibold text-gray-300 mb-4">Plan limits</h2>
+    <dl class="text-sm space-y-2">
+      <div class="flex justify-between"><dt class="text-gray-400">Scans included</dt><dd class="text-white">{{ '{:,}'.format(plan.scans_included) if plan.scans_included else 'Unlimited' }}</dd></div>
+      <div class="flex justify-between"><dt class="text-gray-400">API keys</dt><dd class="text-white">{{ plan.max_api_keys }}</dd></div>
+      <div class="flex justify-between"><dt class="text-gray-400">Overage rate</dt><dd class="text-white">{% if plan.allow_overage %}${{ '{:.3f}'.format(plan.overage_rate_cents_per_unit / 100) }} per scan{% else %}Not allowed (hard cap){% endif %}</dd></div>
+      <div class="flex justify-between"><dt class="text-gray-400">Priority support</dt><dd class="text-white">{{ 'Yes' if plan.priority_support else 'No' }}</dd></div>
+    </dl>
+  </div>
+</div>
+{% endblock %}

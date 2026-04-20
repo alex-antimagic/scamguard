@@ -1,0 +1,52 @@
+{% extends "app/_layout.html" %}
+{% block title %}Scan history — ScamGuard{% endblock %}
+{% block content %}
+<div class="max-w-6xl mx-auto">
+  <header class="mb-6 flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-white">Scan history</h1>
+      <p class="text-sm text-gray-400 mt-1">{{ '{:,}'.format(total) }} total scans</p>
+    </div>
+  </header>
+
+  <div class="bg-surface-900 border border-white/5 rounded-xl overflow-hidden">
+    <table class="w-full text-sm">
+      <thead class="bg-surface-800 text-xs uppercase tracking-wide text-gray-500">
+        <tr>
+          <th class="text-left px-4 py-3">When</th>
+          <th class="text-left px-4 py-3">Address</th>
+          <th class="text-left px-4 py-3">Type</th>
+          <th class="text-left px-4 py-3">Verdict</th>
+          <th class="text-right px-4 py-3">Score</th>
+          <th class="text-left px-4 py-3">Source</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-white/5">
+        {% for scan, event in rows %}
+        {% set colors = {'safe':'text-green-400','suspicious':'text-yellow-400','dangerous':'text-orange-400','malicious':'text-red-400','unknown':'text-gray-400'} %}
+        <tr class="hover:bg-surface-800/50">
+          <td class="px-4 py-3 text-gray-400 whitespace-nowrap">{{ event.created_at.strftime('%b %d, %H:%M') }}</td>
+          <td class="px-4 py-3 text-gray-300 font-mono truncate max-w-xs">{{ scan.address_raw }}</td>
+          <td class="px-4 py-3"><span class="text-xs bg-surface-700 text-gray-300 px-2 py-0.5 rounded">{{ scan.address_type }}</span></td>
+          <td class="px-4 py-3 capitalize font-medium {{ colors.get(scan.verdict, 'text-gray-400') }}">{{ scan.verdict }}</td>
+          <td class="px-4 py-3 text-right tabular-nums">{{ scan.risk_score }}</td>
+          <td class="px-4 py-3 text-gray-500 text-xs">{{ event.source }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="px-4 py-12 text-center text-gray-500">No scans yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if total_pages > 1 %}
+  <div class="mt-4 flex items-center justify-between text-sm text-gray-500">
+    <span>Page {{ page }} of {{ total_pages }}</span>
+    <div class="flex gap-2">
+      {% if page > 1 %}<a href="?page={{ page - 1 }}" class="px-3 py-1.5 bg-surface-800 rounded hover:bg-surface-700">← Prev</a>{% endif %}
+      {% if page < total_pages %}<a href="?page={{ page + 1 }}" class="px-3 py-1.5 bg-surface-800 rounded hover:bg-surface-700">Next →</a>{% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
