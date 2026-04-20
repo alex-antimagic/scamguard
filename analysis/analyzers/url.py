@@ -222,42 +222,37 @@ def analyze_url(url: str) -> tuple[list[Finding], dict]:
     return findings, metadata
 
 
-def check_safe_browsing(url: str, api_key: str) -> list[Finding]:
-    """Check URL against Google Safe Browsing API v4."""
+def check_web_risk(url: str, api_key: str) -> list[Finding]:
+    """Check URL against Google Web Risk API v1."""
     if not api_key:
         return []
 
     try:
-        resp = requests.post(
-            'https://safebrowsing.googleapis.com/v4/threatMatches:find',
+        resp = requests.get(
+            'https://webrisk.googleapis.com/v1/uris:search',
             headers={'X-Goog-Api-Key': api_key},
-            json={
-                'client': {'clientId': 'scamguard', 'clientVersion': '1.0'},
-                'threatInfo': {
-                    'threatTypes': [
-                        'MALWARE', 'SOCIAL_ENGINEERING',
-                        'UNWANTED_SOFTWARE', 'POTENTIALLY_HARMFUL_APPLICATION',
-                    ],
-                    'platformTypes': ['ANY_PLATFORM'],
-                    'threatEntryTypes': ['URL'],
-                    'threatEntries': [{'url': url}],
-                },
-            },
+            params=[
+                ('uri', url),
+                ('threatTypes', 'MALWARE'),
+                ('threatTypes', 'SOCIAL_ENGINEERING'),
+                ('threatTypes', 'UNWANTED_SOFTWARE'),
+            ],
             timeout=5,
         )
         resp.raise_for_status()
         data = resp.json()
 
-        if data.get('matches'):
-            threats = [m['threatType'] for m in data['matches']]
+        threat = data.get('threat')
+        if threat:
+            types = threat.get('threatTypes', [])
             return [Finding(
-                analyzer='blocklist', check='google_safe_browsing',
+                analyzer='blocklist', check='google_web_risk',
                 severity=Severity.CRITICAL,
-                detail=f'Flagged by Google Safe Browsing: {", ".join(threats)}',
+                detail=f'Flagged by Google Web Risk: {", ".join(types)}',
             )]
     except Exception as e:
         import logging
-        logging.getLogger(__name__).warning('Safe Browsing check failed: %s', e)
+        logging.getLogger(__name__).warning('Web Risk check failed: %s', e)
 
     return []
 

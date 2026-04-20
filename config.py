@@ -6,7 +6,7 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # External APIs
-    GOOGLE_SAFE_BROWSING_API_KEY = os.environ.get('GOOGLE_SAFE_BROWSING_API_KEY', '')
+    GOOGLE_WEB_RISK_API_KEY = os.environ.get('GOOGLE_WEB_RISK_API_KEY', '')
     GOOGLE_CSE_API_KEY = os.environ.get('GOOGLE_CSE_API_KEY', '')
     GOOGLE_CSE_ENGINE_ID = os.environ.get('GOOGLE_CSE_ENGINE_ID', '')
 

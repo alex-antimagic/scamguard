@@ -5,7 +5,7 @@ from flask import current_app
 from analysis.models import AddressType, AnalysisResult
 from analysis.classifier import classify_address
 from analysis.scorer import compute_score
-from analysis.analyzers.url import analyze_url, check_safe_browsing, check_whois_age, check_dns
+from analysis.analyzers.url import analyze_url, check_web_risk, check_whois_age, check_dns
 from analysis.analyzers.phone import analyze_phone
 from analysis.analyzers.instagram import analyze_instagram
 from analysis.analyzers.whatsapp import analyze_whatsapp
@@ -57,9 +57,9 @@ def run_scan(raw_address: str) -> AnalysisResult:
         findings.extend(f)
         metadata.update(m)
 
-        # Safe Browsing check
-        api_key = current_app.config.get('GOOGLE_SAFE_BROWSING_API_KEY', '')
-        findings.extend(check_safe_browsing(normalized, api_key))
+        # Web Risk check
+        api_key = current_app.config.get('GOOGLE_WEB_RISK_API_KEY', '')
+        findings.extend(check_web_risk(normalized, api_key))
 
     elif address_type == AddressType.PHONE:
         f, m = analyze_phone(normalized)

@@ -11,7 +11,7 @@ def compute_score(findings: list[Finding]) -> tuple[int, str]:
 
     # Check for blocklist critical hit — short-circuit to 90+
     for f in findings:
-        if f.check == 'google_safe_browsing' and f.severity == Severity.CRITICAL:
+        if f.check == 'google_web_risk' and f.severity == Severity.CRITICAL:
             return 95, 'malicious'
 
     # Weighted additive scoring
