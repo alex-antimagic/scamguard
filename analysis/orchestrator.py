@@ -77,8 +77,8 @@ def run_scan(raw_address: str) -> AnalysisResult:
         metadata.update(m)
 
     # Phase 2: Shared analyzers
-    # Internal reports DB
-    findings.extend(check_internal_reports(normalized, db.session))
+    # Internal reports DB (domain-level match for URLs)
+    findings.extend(check_internal_reports(normalized, db.session, address_type=address_type))
 
     # Google Custom Search
     cse_key = current_app.config.get('GOOGLE_CSE_API_KEY', '')

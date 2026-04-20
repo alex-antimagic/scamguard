@@ -488,6 +488,19 @@
     if (e.key === 'Enter') runScan();
   });
 
+  // Auto-run if ?address= query param is present (e.g. from landing page)
+  (function bootstrapFromQuery() {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const addr = params.get('address');
+      if (addr) {
+        $('searchInput').value = addr;
+        $('clearBtn').classList.remove('hidden');
+        runScan();
+      }
+    } catch (e) { /* no-op */ }
+  })();
+
   // ============================================================
   // Loading progress simulation
   // ============================================================

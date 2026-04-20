@@ -3,14 +3,38 @@ import requests
 from analysis.models import Finding, Severity, AddressType
 
 
-def check_internal_reports(address_normalized: str, db_session) -> list[Finding]:
-    """Check how many times this address has been reported in our DB."""
+def check_internal_reports(address_normalized: str, db_session,
+                           address_type=None) -> list[Finding]:
+    """Check how many times this address (or its domain, for URLs) has been reported."""
     from models.report import ScamReport
+    from analysis.models import AddressType
 
+    # Exact match first
     count = db_session.query(ScamReport).filter(
         ScamReport.address_normalized == address_normalized,
         ScamReport.status != 'rejected',
     ).count()
+
+    detail_suffix = ''
+
+    # For URLs, also match on domain — so scanning a bare domain matches reports
+    # of specific URLs on that domain (and vice versa).
+    if address_type == AddressType.URL and count == 0:
+        try:
+            import tldextract
+            ext = tldextract.extract(address_normalized)
+            domain = ext.registered_domain
+            if domain:
+                domain_count = db_session.query(ScamReport).filter(
+                    ScamReport.address_type == 'url',
+                    ScamReport.address_normalized.like(f'%{domain}%'),
+                    ScamReport.status != 'rejected',
+                ).count()
+                if domain_count > 0:
+                    count = domain_count
+                    detail_suffix = f' on domain {domain}'
+        except Exception:
+            pass
 
     if count == 0:
         return []
@@ -25,7 +49,7 @@ def check_internal_reports(address_normalized: str, db_session) -> list[Finding]
     return [Finding(
         analyzer='reports', check='user_reports',
         severity=severity,
-        detail=f'Reported {count} time{"s" if count != 1 else ""} by users as suspicious',
+        detail=f'Reported {count} time{"s" if count != 1 else ""} by users as suspicious{detail_suffix}',
     )]
 
 

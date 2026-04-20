@@ -1,0 +1,223 @@
+{% extends "app/_layout.html" %}
+{% block title %}Scan — ScamGuard{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto">
+  <header class="mb-6">
+    <h1 class="text-2xl font-bold text-white">Scan</h1>
+    <p class="text-sm text-gray-400 mt-1">Check a URL, phone number, Instagram handle, or WhatsApp number. Uses your account quota.</p>
+  </header>
+
+  <!-- Search bar -->
+  <div class="bg-surface-900 border border-white/5 rounded-2xl p-5 mb-6">
+    <div class="flex gap-2">
+      <input id="scanInput" type="text" autocomplete="off" spellcheck="false"
+        placeholder="https://example.com, +1 555 123 4567, @handle…"
+        class="flex-1 bg-surface-800 border border-surface-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-brand-500" />
+      <button id="scanBtn" onclick="runScan()"
+        class="bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm rounded-xl px-5 py-2.5 transition-colors disabled:opacity-50">
+        Scan
+      </button>
+    </div>
+    <div class="flex flex-wrap gap-2 mt-3">
+      <span class="text-xs text-gray-600">Try:</span>
+      <button onclick="setExample('http://paypa1-secure-login.tk/verify')" class="text-xs text-gray-500 hover:text-brand-400 bg-surface-800 border border-white/5 rounded-md px-2 py-1">paypa1-secure-login.tk</button>
+      <button onclick="setExample('+1 (800) 555-0199')" class="text-xs text-gray-500 hover:text-brand-400 bg-surface-800 border border-white/5 rounded-md px-2 py-1">+1 (800) 555-0199</button>
+      <button onclick="setExample('@crypto_millionaire_tips')" class="text-xs text-gray-500 hover:text-brand-400 bg-surface-800 border border-white/5 rounded-md px-2 py-1">@crypto_millionaire_tips</button>
+      <button onclick="setExample('http://testsafebrowsing.appspot.com/s/malware.html')" class="text-xs text-gray-500 hover:text-brand-400 bg-surface-800 border border-white/5 rounded-md px-2 py-1">Google malware test</button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div id="loadingState" class="hidden bg-surface-900 border border-white/5 rounded-2xl p-8 text-center">
+    <div class="inline-block w-10 h-10 border-4 border-surface-700 border-t-brand-500 rounded-full animate-spin"></div>
+    <p id="loadingMsg" class="text-sm text-gray-400 mt-4">Running analyzers…</p>
+  </div>
+
+  <!-- Error -->
+  <div id="errorState" class="hidden bg-red-900/40 border border-red-700 rounded-2xl p-5">
+    <p class="font-semibold text-red-300 text-sm">Scan failed</p>
+    <p id="errorMessage" class="text-xs text-red-200 mt-1"></p>
+    <p id="errorAction" class="text-xs mt-2"></p>
+  </div>
+
+  <!-- Results -->
+  <div id="resultState" class="hidden space-y-4">
+    <!-- Header card -->
+    <div class="bg-surface-900 border border-white/5 rounded-2xl p-6">
+      <div class="flex items-start gap-5">
+        <!-- Gauge -->
+        <svg width="100" height="100" viewBox="0 0 80 80" class="shrink-0">
+          <circle cx="40" cy="40" r="30" fill="none" stroke="#1e2128" stroke-width="7"/>
+          <circle id="gaugeArc" cx="40" cy="40" r="30" fill="none" stroke="#9ca3af" stroke-width="7"
+            stroke-linecap="round" stroke-dasharray="188.5" stroke-dashoffset="188.5"
+            transform="rotate(-90 40 40)" style="transition: stroke-dashoffset 0.8s ease, stroke 0.3s ease"/>
+          <text id="gaugeScore" x="40" y="46" text-anchor="middle" font-size="22" font-weight="bold" fill="#fff" font-family="Inter">0</text>
+        </svg>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 mb-1.5 flex-wrap">
+            <span id="addrType" class="text-xs bg-surface-700 text-gray-300 px-2 py-0.5 rounded uppercase tracking-wide">url</span>
+            <span id="verdictBadge" class="text-xs bg-gray-700 text-gray-200 px-2 py-0.5 rounded font-medium uppercase tracking-wide">Safe</span>
+          </div>
+          <div id="verdictText" class="text-xl font-bold text-white mb-0.5">Safe</div>
+          <div id="verdictAddress" class="text-sm text-gray-400 font-mono truncate"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Findings -->
+    <div id="findingsSection" class="hidden bg-surface-900 border border-white/5 rounded-2xl p-6">
+      <h2 class="text-sm font-semibold text-gray-300 mb-3">Findings (<span id="findingsCount">0</span>)</h2>
+      <ul id="findingsList" class="divide-y divide-white/5"></ul>
+    </div>
+
+    <!-- Metadata -->
+    <div id="metaSection" class="hidden bg-surface-900 border border-white/5 rounded-2xl p-6">
+      <h2 class="text-sm font-semibold text-gray-300 mb-3">Details</h2>
+      <dl id="metaGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-y-3 gap-x-6 text-sm"></dl>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+const riskConfig = {
+  safe:       { label: 'Safe',       color: '#22c55e', badge: 'bg-green-900/50 text-green-300',   text: 'text-green-400' },
+  suspicious: { label: 'Suspicious', color: '#eab308', badge: 'bg-yellow-900/50 text-yellow-300', text: 'text-yellow-400' },
+  dangerous:  { label: 'Dangerous',  color: '#f97316', badge: 'bg-orange-900/50 text-orange-300', text: 'text-orange-400' },
+  malicious:  { label: 'Malicious',  color: '#ef4444', badge: 'bg-red-900/50 text-red-300',       text: 'text-red-400' },
+  unknown:    { label: 'Unknown',    color: '#9ca3af', badge: 'bg-gray-800 text-gray-400',         text: 'text-gray-400' },
+};
+const severityConfig = {
+  info:     { label: 'Info',     cls: 'bg-blue-900/50 text-blue-300',     dot: '#60a5fa' },
+  low:      { label: 'Low',      cls: 'bg-gray-800 text-gray-400',        dot: '#9ca3af' },
+  medium:   { label: 'Medium',   cls: 'bg-yellow-900/50 text-yellow-300', dot: '#fbbf24' },
+  high:     { label: 'High',     cls: 'bg-orange-900/50 text-orange-300', dot: '#fb923c' },
+  critical: { label: 'Critical', cls: 'bg-red-900/50 text-red-300',       dot: '#f87171' },
+};
+const analyzerLabels = {
+  url: 'URL Heuristics', phone: 'Phone Analysis', instagram: 'Instagram', whatsapp: 'WhatsApp',
+  blocklist: 'Google Web Risk', reports: 'Community Reports', search: 'Web Search',
+  whois: 'Domain Age', dns: 'DNS',
+};
+
+function escHtml(s) { return (s ?? '').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]); }
+function setExample(v) { $('scanInput').value = v; $('scanInput').focus(); }
+function formatKey(k) { return k.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()); }
+
+$('scanInput').addEventListener('keydown', e => { if (e.key === 'Enter') runScan(); });
+
+let currentAddress = '';
+
+async function runScan() {
+  const address = $('scanInput').value.trim();
+  if (!address) { $('scanInput').focus(); return; }
+  currentAddress = address;
+
+  $('resultState').classList.add('hidden');
+  $('errorState').classList.add('hidden');
+  $('loadingState').classList.remove('hidden');
+  $('scanBtn').disabled = true;
+
+  try {
+    const res = await fetch('/api/v1/scan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ address }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      $('loadingState').classList.add('hidden');
+      $('errorState').classList.remove('hidden');
+      $('errorMessage').textContent = data.error || `Server returned ${res.status}`;
+      if (data.upgrade_url) {
+        $('errorAction').innerHTML = `<a href="${escHtml(data.upgrade_url)}" class="text-brand-400 hover:text-brand-300">Upgrade your plan →</a>`;
+      } else {
+        $('errorAction').textContent = '';
+      }
+      return;
+    }
+    $('loadingState').classList.add('hidden');
+    renderResult(data);
+  } catch (err) {
+    $('loadingState').classList.add('hidden');
+    $('errorState').classList.remove('hidden');
+    $('errorMessage').textContent = err.message || 'Network error';
+    $('errorAction').textContent = '';
+  } finally {
+    $('scanBtn').disabled = false;
+  }
+}
+
+function renderResult(data) {
+  const risk = riskConfig[data.verdict] || riskConfig.unknown;
+
+  // Gauge
+  const score = data.risk_score || 0;
+  const circumference = 2 * Math.PI * 30;
+  $('gaugeArc').style.strokeDashoffset = circumference * (1 - score / 100);
+  $('gaugeArc').style.stroke = risk.color;
+  $('gaugeScore').textContent = score;
+
+  // Header
+  $('addrType').textContent = (data.address && data.address.type) || 'unknown';
+  $('verdictBadge').textContent = risk.label;
+  $('verdictBadge').className = 'text-xs px-2 py-0.5 rounded font-medium uppercase tracking-wide ' + risk.badge;
+  $('verdictText').textContent = risk.label;
+  $('verdictText').className = 'text-xl font-bold mb-0.5 ' + risk.text;
+  $('verdictAddress').textContent = currentAddress;
+
+  // Findings
+  const findings = data.findings || [];
+  if (findings.length > 0) {
+    $('findingsSection').classList.remove('hidden');
+    $('findingsCount').textContent = findings.length;
+    $('findingsList').innerHTML = findings.map(f => {
+      const sev = severityConfig[f.severity] || severityConfig.info;
+      const analyzer = analyzerLabels[f.analyzer] || f.analyzer || 'Analyzer';
+      return `
+        <li class="py-3 flex items-start gap-3">
+          <span class="mt-1.5 w-2 h-2 rounded-full shrink-0" style="background:${sev.dot}"></span>
+          <div class="flex-1 min-w-0">
+            <div class="flex flex-wrap items-center gap-2 mb-0.5">
+              <span class="text-xs font-medium text-gray-400">${escHtml(analyzer)}</span>
+              <span class="text-xs px-2 py-0.5 rounded ${sev.cls}">${sev.label}</span>
+            </div>
+            <p class="text-sm text-gray-300">${escHtml(f.detail || '')}</p>
+          </div>
+        </li>`;
+    }).join('');
+  } else {
+    $('findingsSection').classList.add('hidden');
+  }
+
+  // Metadata
+  const meta = data.metadata || {};
+  const entries = Object.entries(meta).filter(([k,v]) => v !== null && v !== '');
+  if (entries.length > 0) {
+    $('metaSection').classList.remove('hidden');
+    $('metaGrid').innerHTML = entries.map(([k,v]) => `
+      <div>
+        <dt class="text-xs text-gray-500 uppercase tracking-wide mb-0.5">${escHtml(formatKey(k))}</dt>
+        <dd class="text-gray-300 truncate">${escHtml(String(v))}</dd>
+      </div>`).join('');
+  } else {
+    $('metaSection').classList.add('hidden');
+  }
+
+  $('resultState').classList.remove('hidden');
+}
+
+// Auto-scan from ?address= query param
+(function() {
+  try {
+    const addr = new URLSearchParams(window.location.search).get('address');
+    if (addr) {
+      $('scanInput').value = addr;
+      runScan();
+    }
+  } catch (e) {}
+})();
+</script>
+{% endblock %}

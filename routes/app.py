@@ -23,6 +23,12 @@ def _period_start(sub):
     return now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
 
+@app_bp.route('/scan')
+@login_required
+def scan():
+    return render_template('app/scan.html')
+
+
 @app_bp.route('/')
 @login_required
 def overview():
