@@ -17,6 +17,10 @@ class Config:
     # Public base URL for email links
     APP_BASE_URL = os.environ.get('APP_BASE_URL', 'http://localhost:5555')
 
+    # Dev-only: override verification code that always works.
+    # Useful when SMTP isn't configured. Unset in real production.
+    DEV_VERIFY_CODE = os.environ.get('DEV_VERIFY_CODE', '')
+
     # Stripe
     STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
     STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY', '')
