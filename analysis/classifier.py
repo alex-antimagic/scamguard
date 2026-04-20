@@ -55,12 +55,21 @@ def _extract_instagram_handle(raw: str) -> str | None:
 
 
 def _extract_wa_number(raw: str) -> str | None:
+    """Extract and E.164-normalize a WhatsApp number from a wa.me link."""
     match = re.search(r'wa\.me/(\+?\d{7,15})', raw, re.IGNORECASE)
-    if match:
-        num = match.group(1)
-        if not num.startswith('+'):
-            num = '+' + num
-        return num
+    if not match:
+        return None
+    num = match.group(1)
+    if not num.startswith('+'):
+        num = '+' + num
+    try:
+        parsed = phonenumbers.parse(num, None)
+        if phonenumbers.is_valid_number(parsed):
+            return phonenumbers.format_number(
+                parsed, phonenumbers.PhoneNumberFormat.E164
+            )
+    except phonenumbers.NumberParseException:
+        pass
     return None
 
 
